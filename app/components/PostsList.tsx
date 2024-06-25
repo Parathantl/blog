@@ -4,12 +4,11 @@ import PostCard from "./PostCard";
 interface PostType {
     id: number,
     title: string,
-    body: string
+    content: string
 }
 
 const getPosts = async () => {
-    const res = await fetch("https://jsonplaceholder.typicode.com/posts");
-    console.log(res);
+    const res = await fetch("http://localhost:3001/post?date=desc");
     if(!res.ok) {
         throw new Error('Invalid API');
     }

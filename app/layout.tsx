@@ -7,7 +7,7 @@ import Footer from "./components/Footer";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Parathan blod",
+  title: "Parathan Thiyagalingam",
   description: "Documenting my dev & weekly notes updates!",
 };
 
@@ -23,7 +23,7 @@ const RootLayout: React.FC<RootLayoutProps> = ({ children }) => {
           <div className="wrapper">
             <Navbar />
             {children}
-            <Footer />
+            <Footer />          
           </div>
         </div>
       </body>
