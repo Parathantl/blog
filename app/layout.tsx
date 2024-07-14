@@ -1,14 +1,15 @@
 import React, { ReactNode } from 'react';
-import Navbar from "./components/Navbar";
-import "./globals.css";
-import { Inter } from "next/font/google";
-import Footer from "./components/Footer";
+import Navbar from './components/Navbar';
+import './globals.css';
+import { Inter } from 'next/font/google';
+import Footer from './components/Footer';
+import 'react-toastify/dist/ReactToastify.css';
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: "Parathan Thiyagalingam",
-  description: "Documenting my dev & weekly notes updates!",
+  title: 'Parathan Thiyagalingam',
+  description: 'Documenting my dev & weekly notes updates!',
 };
 
 interface RootLayoutProps {
@@ -18,13 +19,13 @@ interface RootLayoutProps {
 const RootLayout: React.FC<RootLayoutProps> = ({ children }) => {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <div className="container">
-          <div className="wrapper">
-            <Navbar />
+      <body className={`${inter.className} bg-gray-800`}>
+        <div className="min-h-screen flex flex-col">
+          <Navbar />
+          <main className="flex-grow container mx-auto px-4 py-6">
             {children}
-            <Footer />          
-          </div>
+          </main>
+          <Footer />
         </div>
       </body>
     </html>
