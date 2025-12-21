@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 interface User {
   id: number;
@@ -49,9 +50,11 @@ const Navbar: React.FC = () => {
         withCredentials: true,
       });
       setUser(null);
+      toast.success('Logged out successfully');
       router.push('/');
     } catch (error) {
       console.error('Error logging out:', error);
+      toast.error('Failed to logout. Please try again.');
     }
   };
 

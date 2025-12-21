@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import ImageUpload from '../../../components/ImageUpload';
 
 const RichTextEditor = dynamic(() => import('../../../components/RichTextEditor'), { ssr: false });
 
@@ -152,23 +153,13 @@ const AddPost: React.FC = () => {
             </div>
           </div>
 
-          {/* Main Image URL */}
-          <div>
-            <label htmlFor="mainImageUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Featured Image URL
-            </label>
-            <input
-              type="url"
-              id="mainImageUrl"
-              value={mainImageUrl}
-              onChange={(e) => setMainImageUrl(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-              placeholder="https://example.com/image.jpg"
-            />
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Optional: Add a featured image for your post
-            </p>
-          </div>
+          {/* Featured Image */}
+          <ImageUpload
+            label="Featured Image"
+            value={mainImageUrl}
+            onChange={setMainImageUrl}
+            preview={true}
+          />
 
           {/* Content */}
           <div>

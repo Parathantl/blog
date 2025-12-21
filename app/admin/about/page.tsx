@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { portfolioAPI } from '@/app/lib/api';
+import ImageUpload from '@/app/components/ImageUpload';
 
 interface About {
   id: number;
@@ -257,19 +258,12 @@ export default function AboutEditor() {
               Links & Resources
             </h2>
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Profile Image URL
-                </label>
-                <input
-                  type="url"
-                  name="profileImageUrl"
-                  value={formData.profileImageUrl}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="https://example.com/profile.jpg"
-                />
-              </div>
+              <ImageUpload
+                label="Profile Image"
+                value={formData.profileImageUrl}
+                onChange={(url) => setFormData(prev => ({ ...prev, profileImageUrl: url }))}
+                preview={true}
+              />
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

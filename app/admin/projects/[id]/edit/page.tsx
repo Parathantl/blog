@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { portfolioAPI } from '@/app/lib/api';
+import ImageUpload from '../../../../components/ImageUpload';
 
 interface Project {
   id: number;
@@ -252,20 +253,13 @@ export default function EditProject() {
             </div>
           </div>
 
-          {/* Image URL */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Image URL
-            </label>
-            <input
-              type="url"
-              name="imageUrl"
-              value={formData.imageUrl}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-              placeholder="https://example.com/image.jpg"
-            />
-          </div>
+          {/* Project Image */}
+          <ImageUpload
+            label="Project Image"
+            value={formData.imageUrl}
+            onChange={(url) => setFormData(prev => ({ ...prev, imageUrl: url }))}
+            preview={true}
+          />
 
           {/* Dates */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

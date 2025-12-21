@@ -42,11 +42,15 @@ const LoginPage = () => {
           router.push('/admin');
         }, 2000);
       } else {
-        setError(data.message);
+        const errorMessage = data.message || 'Login failed';
+        setError(errorMessage);
+        toast.error(errorMessage);
       }
     } catch (error) {
       console.error('Error logging in:', error);
-      setError('An error occurred. Please try again.');
+      const errorMessage = 'An error occurred. Please try again.';
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
