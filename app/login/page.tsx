@@ -30,14 +30,17 @@ const LoginPage = () => {
       if (data.success) {
         toast.success('Login successful', {
           position: "top-center",
-          autoClose: 5000,
+          autoClose: 2000,
           hideProgressBar: false,
           closeOnClick: true,
           pauseOnHover: true,
           draggable: true,
           progress: undefined,
         });
-        router.push('/'); // Redirect to the homepage after successful login
+        // Redirect to admin after successful login
+        setTimeout(() => {
+          router.push('/admin');
+        }, 2000);
       } else {
         setError(data.message);
       }

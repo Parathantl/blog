@@ -8,92 +8,135 @@ Quill.register('modules/imageResize', ImageResize);
 
 interface RichTextEditorProps {
   onChange: (content: string) => void;
+  value?: string;
 }
 
-const RichTextEditor: React.FC<RichTextEditorProps> = ({ onChange }) => {
+const RichTextEditor: React.FC<RichTextEditorProps> = ({ onChange, value }) => {
   const quillRef = useRef<HTMLDivElement>(null);
+  const quillInstanceRef = useRef<Quill | null>(null);
+  const isInitializedRef = useRef(false);
 
-  useEffect(() => {
-    const uploadImage = async (file: File) => {
-      const formData = new FormData();
-      formData.append('file', file);
+  const uploadImage = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
 
-      try {
-        const response = await fetch('http://localhost:3001/post/upload-photo', {
-          method: 'POST',
-          body: formData,
-        });
+    try {
+      const response = await fetch('http://localhost:3001/post/upload-photo', {
+        method: 'POST',
+        body: formData,
+      });
 
-        if (!response.ok) {
-          throw new Error('Image upload failed');
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || 'Image upload failed');
+      }
+
+      const data = await response.json();
+      return data.filePath;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Failed to upload image. Please try again.');
+      return null;
+    }
+  };
+
+  const handleImageUpload = () => {
+    const input = document.createElement('input');
+    input.setAttribute('type', 'file');
+    input.setAttribute('accept', 'image/jpeg,image/jpg,image/png,image/gif,image/webp');
+    input.click();
+
+    input.onchange = async () => {
+      const file = input.files ? input.files[0] : null;
+      if (file) {
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+          alert('File size must be less than 5MB');
+          return;
         }
 
-        const data = await response.json();
-        console.log(data);
-        return data.filePath; // Assuming the server returns a JSON object with the URL
-      } catch (error) {
-        console.error('Error uploading image:', error);
-        return null;
-      }
-    };
+        // Show loading indicator
+        const range = quillInstanceRef.current?.getSelection();
+        if (range) {
+          quillInstanceRef.current?.insertText(range.index, 'Uploading image...');
+        }
 
-    let quillInstance: Quill | null = null;
+        const url = await uploadImage(file);
 
-    const handleImageUpload = () => {
-      const input = document.createElement('input');
-      input.setAttribute('type', 'file');
-      input.setAttribute('accept', 'image/*');
-      input.click();
+        // Remove loading text
+        if (range && quillInstanceRef.current) {
+          quillInstanceRef.current?.deleteText(range.index, 'Uploading image...'.length);
 
-      input.onchange = async () => {
-        const file = input.files ? input.files[0] : null;
-        if (file) {
-          const url = await uploadImage(file);
           if (url) {
-            const range = quillInstance?.getSelection(); // Add null check for quillInstance
-            if (range) {
-              quillInstance?.insertEmbed(range.index, 'image', url);
-            }
+            quillInstanceRef.current?.insertEmbed(range.index, 'image', url);
           }
         }
-      };
+      }
     };
+  };
 
-    if (quillRef.current) {
-      quillInstance = new Quill(quillRef.current, {
+  // Initialize Quill only once
+  useEffect(() => {
+    if (quillRef.current && !isInitializedRef.current) {
+      quillInstanceRef.current = new Quill(quillRef.current, {
         theme: 'snow',
         modules: {
           toolbar: {
             container: [
-              [{ 'header': [1, 2, false] }],
-              ['bold', 'italic', 'underline'],
-              ['image', 'code-block'],
+              [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+              [{ 'font': [] }],
+              [{ 'size': ['small', false, 'large', 'huge'] }],
+              ['bold', 'italic', 'underline', 'strike'],
+              [{ 'color': [] }, { 'background': [] }],
+              [{ 'script': 'sub' }, { 'script': 'super' }],
+              [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+              [{ 'indent': '-1' }, { 'indent': '+1' }],
+              [{ 'align': [] }],
+              ['blockquote', 'code-block'],
+              ['link', 'image', 'video'],
+              ['clean'],
             ],
             handlers: {
               image: handleImageUpload,
             },
           },
-          imageResize: {},
+          imageResize: {
+            displaySize: true,
+          },
         },
       });
 
-      quillInstance.on('text-change', () => {
-        if (quillInstance) {
-          onChange(quillInstance.root.innerHTML);
+      quillInstanceRef.current.on('text-change', () => {
+        if (quillInstanceRef.current) {
+          onChange(quillInstanceRef.current.root.innerHTML);
         }
       });
-    }
 
-    return () => {
-      if (quillInstance) {
-        quillInstance = null;
+      // Set initial value if provided
+      if (value) {
+        quillInstanceRef.current.root.innerHTML = value;
       }
-    };
-  }, [onChange]);
+
+      isInitializedRef.current = true;
+    }
+  }, []); // Empty dependency array - initialize only once
+
+  // Update content when value prop changes (for edit mode)
+  useEffect(() => {
+    if (quillInstanceRef.current && value !== undefined && isInitializedRef.current) {
+      const currentContent = quillInstanceRef.current.root.innerHTML;
+      if (currentContent !== value) {
+        quillInstanceRef.current.root.innerHTML = value;
+      }
+    }
+  }, [value]);
 
   return (
     <div>
-      <div ref={quillRef} style={{ height: '500px' }}></div>
+      <div ref={quillRef} style={{ height: '600px' }}></div>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+        💡 Tip: You can drag corners to resize images after inserting them. Supports JPG, PNG, GIF, WebP (max 5MB).
+      </p>
     </div>
   );
 };
