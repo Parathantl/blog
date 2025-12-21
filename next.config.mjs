@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone', // Enable for Docker builds
   images: {
     remotePatterns: [
       {
@@ -9,6 +10,11 @@ const nextConfig = {
       {
         protocol: 'http',
         hostname: 'localhost',
+        port: '3001',
+      },
+      {
+        protocol: 'http',
+        hostname: 'backend', // Docker network hostname
         port: '3001',
       },
     ],
