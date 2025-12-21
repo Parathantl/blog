@@ -52,11 +52,23 @@ async function proxyRequest(
       searchParams ? `?${searchParams}` : ''
     }`;
 
-    // Prepare headers
+    // Prepare headers (filter out hop-by-hop headers)
+    const hopByHopHeaders = [
+      'connection',
+      'keep-alive',
+      'transfer-encoding',
+      'upgrade',
+      'host',
+      'te',
+      'trailer',
+      'proxy-authorization',
+      'proxy-authenticate',
+    ];
+
     const headers = new Headers();
     request.headers.forEach((value, key) => {
-      // Skip host header to avoid conflicts
-      if (key.toLowerCase() !== 'host') {
+      // Skip hop-by-hop headers
+      if (!hopByHopHeaders.includes(key.toLowerCase())) {
         headers.set(key, value);
       }
     });
