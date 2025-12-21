@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'react-toastify';
 import { blogAPI } from '@/app/lib/api';
+import { API_BASE_URL } from '@/app/lib/config';
 
 interface Post {
   id: number;
@@ -50,7 +51,7 @@ export default function PostsManagement() {
     if (!confirm('Are you sure you want to delete this post?')) return;
 
     try {
-      await fetch(`http://localhost:3001/posts/${id}`, {
+      await fetch(`${API_BASE_URL}/posts/${id}`, {
         method: 'DELETE',
         credentials: 'include',
       });

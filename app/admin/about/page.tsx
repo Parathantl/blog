@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { portfolioAPI } from '@/app/lib/api';
 import ImageUpload from '@/app/components/ImageUpload';
+import { API_BASE_URL } from '@/app/lib/config';
 
 interface About {
   id: number;
@@ -81,7 +82,7 @@ export default function AboutEditor() {
     setSaving(true);
 
     try {
-      const response = await fetch('http://localhost:3001/portfolio/about', {
+      const response = await fetch(`${API_BASE_URL}/portfolio/about`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

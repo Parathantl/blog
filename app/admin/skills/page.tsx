@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'react-toastify';
 import { portfolioAPI } from '@/app/lib/api';
+import { API_BASE_URL } from '@/app/lib/config';
 import {
   DndContext,
   closestCenter,
@@ -163,7 +164,7 @@ export default function SkillsManagement() {
   const fetchSkills = async () => {
     try {
       // Use admin endpoint to get ALL skills including hidden ones
-      const response = await fetch('http://localhost:3001/portfolio/skills/admin', {
+      const response = await fetch(`${API_BASE_URL}/portfolio/skills/admin`, {
         credentials: 'include',
       });
 
@@ -185,7 +186,7 @@ export default function SkillsManagement() {
     if (!confirm('Are you sure you want to delete this skill?')) return;
 
     try {
-      await fetch(`http://localhost:3001/portfolio/skills/${id}`, {
+      await fetch(`${API_BASE_URL}/portfolio/skills/${id}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -199,7 +200,7 @@ export default function SkillsManagement() {
 
   const toggleVisibility = async (skill: Skill) => {
     try {
-      await fetch(`http://localhost:3001/portfolio/skills/${skill.id}`, {
+      await fetch(`${API_BASE_URL}/portfolio/skills/${skill.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -250,7 +251,7 @@ export default function SkillsManagement() {
 
     // Send update to backend
     try {
-      const response = await fetch('http://localhost:3001/portfolio/skills/reorder', {
+      const response = await fetch(`${API_BASE_URL}/portfolio/skills/reorder`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

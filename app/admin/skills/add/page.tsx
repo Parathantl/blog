@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
+import { API_BASE_URL } from '@/app/lib/config';
 
 const CATEGORIES = ['Frontend', 'Backend', 'Database', 'DevOps', 'Tools', 'Mobile', 'Other'];
 
@@ -36,7 +37,7 @@ export default function AddSkill() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/portfolio/skills', {
+      const response = await fetch(`${API_BASE_URL}/portfolio/skills`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

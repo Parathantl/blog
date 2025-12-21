@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
+import { API_BASE_URL } from '@/app/lib/config';
 
 export default function AddExperience() {
   const router = useRouter();
@@ -62,7 +63,7 @@ export default function AddExperience() {
         displayOrder: parseInt(formData.displayOrder.toString()),
       };
 
-      const response = await fetch('http://localhost:3001/portfolio/experience', {
+      const response = await fetch(`${API_BASE_URL}/portfolio/experience`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

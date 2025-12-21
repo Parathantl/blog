@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import ImageUpload from '../../../components/ImageUpload';
+import { API_BASE_URL } from '@/app/lib/config';
 
 export default function AddProject() {
   const router = useRouter();
@@ -52,7 +53,7 @@ export default function AddProject() {
         endDate: formData.endDate ? new Date(formData.endDate).toISOString() : null,
       };
 
-      const response = await fetch('http://localhost:3001/portfolio/projects', {
+      const response = await fetch(`${API_BASE_URL}/portfolio/projects`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

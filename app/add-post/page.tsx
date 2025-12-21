@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import axios from 'axios';
+import { API_BASE_URL } from '@/app/lib/config';
 
 const RichTextEditor = dynamic(() => import('../components/RichTextEditor'), { ssr: false });
 
@@ -12,7 +13,7 @@ const CreatePost: React.FC = () => {
 
   const handleSubmit = async () => {
     try {
-      await axios.post('http://localhost:3001/post', {
+      await axios.post(`${API_BASE_URL}/post`, {
         title,
         content,
         mainImageUrl: 'Hello world',

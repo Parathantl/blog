@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useRouter } from 'next/navigation'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'; // Ensure this is imported if not already globally
+import { API_BASE_URL } from '../lib/config';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -15,7 +16,7 @@ const LoginPage = () => {
     e.preventDefault();
 
     try {
-      const response = await axios.post('http://localhost:3001/auth/login', {
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, {
         email,
         password
       }, {

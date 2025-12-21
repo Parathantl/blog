@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
 import ImageResize from 'quill-image-resize';
+import { API_BASE_URL } from '../lib/config';
 
 // Register the image resize module
 Quill.register('modules/imageResize', ImageResize);
@@ -21,7 +22,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ onChange, value }) => {
     formData.append('file', file);
 
     try {
-      const response = await fetch('http://localhost:3001/post/upload-photo', {
+      const response = await fetch(`${API_BASE_URL}/post/upload-photo`, {
         method: 'POST',
         body: formData,
       });

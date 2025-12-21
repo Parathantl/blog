@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PostCard from "./PostCard";
+import { API_BASE_URL } from '@/app/lib/config';
 
 interface PostType {
   id: number;
@@ -8,7 +9,7 @@ interface PostType {
 }
 
 const getPosts = async () => {
-  const res = await fetch("http://localhost:3001/post?date=desc");
+  const res = await fetch(`${API_BASE_URL}/post?date=desc`);
   if (!res.ok) {
     throw new Error('Failed to fetch posts. Please try again later.');
   }

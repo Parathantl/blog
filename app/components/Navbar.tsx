@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { API_BASE_URL } from '../lib/config';
 
 interface User {
   id: number;
@@ -27,7 +28,7 @@ const Navbar: React.FC = () => {
 
   const checkAuthStatus = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/auth/authstatus', {
+      const response = await axios.get(`${API_BASE_URL}/auth/authstatus`, {
         withCredentials: true,
       });
 
@@ -46,7 +47,7 @@ const Navbar: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.post('http://localhost:3001/auth/logout', {}, {
+      await axios.post(`${API_BASE_URL}/auth/logout`, {}, {
         withCredentials: true,
       });
       setUser(null);

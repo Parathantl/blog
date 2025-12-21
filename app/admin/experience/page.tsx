@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'react-toastify';
 import { portfolioAPI } from '@/app/lib/api';
+import { API_BASE_URL } from '@/app/lib/config';
 
 interface Experience {
   id: number;
@@ -44,7 +45,7 @@ export default function ExperienceManagement() {
     if (!confirm('Are you sure you want to delete this experience?')) return;
 
     try {
-      await fetch(`http://localhost:3001/portfolio/experience/${id}`, {
+      await fetch(`${API_BASE_URL}/portfolio/experience/${id}`, {
         method: 'DELETE',
         credentials: 'include',
       });

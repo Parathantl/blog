@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import AdminSidebar from '../components/admin/AdminSidebar';
+import { API_BASE_URL } from '../lib/config';
 
 export default function AdminLayout({
   children,
@@ -17,7 +18,7 @@ export default function AdminLayout({
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await axios.get('http://localhost:3001/auth/authstatus', {
+        const response = await axios.get(`${API_BASE_URL}/auth/authstatus`, {
           withCredentials: true,
         });
 

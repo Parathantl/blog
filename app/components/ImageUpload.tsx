@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { toast } from 'react-toastify';
+import { API_BASE_URL } from '../lib/config';
 
 interface ImageUploadProps {
   label: string;
@@ -15,7 +16,7 @@ export default function ImageUpload({
   label,
   value,
   onChange,
-  uploadEndpoint = 'http://localhost:3001/post/upload-photo',
+  uploadEndpoint = `${API_BASE_URL}/post/upload-photo`,
   preview = true,
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);

@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import ImageUpload from '../../../components/ImageUpload';
+import { API_BASE_URL } from '@/app/lib/config';
 
 const RichTextEditor = dynamic(() => import('../../../components/RichTextEditor'), { ssr: false });
 
@@ -30,7 +31,7 @@ const AddPost: React.FC = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/category', {
+      const response = await axios.get(`${API_BASE_URL}/category`, {
         withCredentials: true,
       });
       setCategories(response.data);
@@ -65,7 +66,7 @@ const AddPost: React.FC = () => {
     setLoading(true);
 
     try {
-      await axios.post('http://localhost:3001/post', {
+      await axios.post(`${API_BASE_URL}/post`, {
         title,
         content,
         mainImageUrl: mainImageUrl || 'default-image.jpg',

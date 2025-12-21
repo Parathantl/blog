@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'react-toastify';
+import { API_BASE_URL } from '@/app/lib/config';
 
 interface Experience {
   id: number;
@@ -47,7 +48,7 @@ export default function EditExperience() {
 
   const fetchExperience = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/portfolio/experience/${expId}`, {
+      const response = await fetch(`${API_BASE_URL}/portfolio/experience/${expId}`, {
         credentials: 'include',
       });
 
@@ -120,7 +121,7 @@ export default function EditExperience() {
         displayOrder: parseInt(formData.displayOrder.toString()),
       };
 
-      const response = await fetch(`http://localhost:3001/portfolio/experience/${expId}`, {
+      const response = await fetch(`${API_BASE_URL}/portfolio/experience/${expId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

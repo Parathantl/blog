@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { portfolioAPI } from '@/app/lib/api';
 import ImageUpload from '../../../../components/ImageUpload';
+import { API_BASE_URL } from '@/app/lib/config';
 
 interface Project {
   id: number;
@@ -103,7 +104,7 @@ export default function EditProject() {
         endDate: formData.endDate ? new Date(formData.endDate).toISOString() : null,
       };
 
-      const response = await fetch(`http://localhost:3001/portfolio/projects/${projectId}`, {
+      const response = await fetch(`${API_BASE_URL}/portfolio/projects/${projectId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

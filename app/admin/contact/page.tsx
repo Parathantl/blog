@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import { API_BASE_URL } from '@/app/lib/config';
 
 interface ContactMessage {
   id: number;
@@ -26,7 +27,7 @@ export default function ContactMessages() {
 
   const fetchMessages = async () => {
     try {
-      const response = await fetch('http://localhost:3001/contact', {
+      const response = await fetch(`${API_BASE_URL}/contact`, {
         credentials: 'include',
       });
 
@@ -46,7 +47,7 @@ export default function ContactMessages() {
 
   const markAsRead = async (id: number) => {
     try {
-      await fetch(`http://localhost:3001/contact/${id}/read`, {
+      await fetch(`${API_BASE_URL}/contact/${id}/read`, {
         method: 'PATCH',
         credentials: 'include',
       });
@@ -61,7 +62,7 @@ export default function ContactMessages() {
     if (!confirm('Are you sure you want to delete this message?')) return;
 
     try {
-      await fetch(`http://localhost:3001/contact/${id}`, {
+      await fetch(`${API_BASE_URL}/contact/${id}`, {
         method: 'DELETE',
         credentials: 'include',
       });

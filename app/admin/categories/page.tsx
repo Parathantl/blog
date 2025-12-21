@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import { API_BASE_URL } from '@/app/lib/config';
 import {
   DndContext,
   closestCenter,
@@ -151,7 +152,7 @@ export default function CategoriesManagement() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('http://localhost:3001/category', {
+      const response = await fetch(`${API_BASE_URL}/category`, {
         credentials: 'include',
       });
 
@@ -197,8 +198,8 @@ export default function CategoriesManagement() {
 
     try {
       const url = editingId
-        ? `http://localhost:3001/category/${editingId}`
-        : 'http://localhost:3001/category';
+        ? `${API_BASE_URL}/category/${editingId}`
+        : `${API_BASE_URL}/category`;
 
       const response = await fetch(url, {
         method: editingId ? 'PATCH' : 'POST',
@@ -241,7 +242,7 @@ export default function CategoriesManagement() {
     if (!confirm('Are you sure you want to delete this category?')) return;
 
     try {
-      await fetch(`http://localhost:3001/category/${id}`, {
+      await fetch(`${API_BASE_URL}/category/${id}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -277,7 +278,7 @@ export default function CategoriesManagement() {
 
     // Send update to backend
     try {
-      const response = await fetch('http://localhost:3001/category/reorder', {
+      const response = await fetch(`${API_BASE_URL}/category/reorder`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
