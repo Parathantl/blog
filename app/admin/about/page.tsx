@@ -263,6 +263,7 @@ export default function AboutEditor() {
                 label="Profile Image"
                 value={formData.profileImageUrl}
                 onChange={(url) => setFormData(prev => ({ ...prev, profileImageUrl: url }))}
+                folder="profiles"
                 preview={true}
               />
 

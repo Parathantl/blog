@@ -192,6 +192,7 @@ export default function AddProject() {
             label="Project Image"
             value={formData.imageUrl}
             onChange={(url) => setFormData(prev => ({ ...prev, imageUrl: url }))}
+            folder="projects"
             preview={true}
           />
 

@@ -159,6 +159,7 @@ const AddPost: React.FC = () => {
             label="Featured Image"
             value={mainImageUrl}
             onChange={setMainImageUrl}
+            folder="posts"
             preview={true}
           />
 
