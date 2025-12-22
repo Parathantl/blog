@@ -63,6 +63,7 @@ async function proxyRequest(
       'trailer',
       'proxy-authorization',
       'proxy-authenticate',
+      'content-length', // Let fetch calculate this for FormData
     ];
 
     const headers = new Headers();
