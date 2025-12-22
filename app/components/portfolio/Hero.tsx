@@ -23,31 +23,31 @@ export default function Hero({
 }: HeroProps) {
   return (
     <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 dark:from-gray-950 dark:via-gray-900 dark:to-black">
-      <div className="container mx-auto px-6 py-20">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-12">
+      <div className="container mx-auto px-4 sm:px-6 py-12 sm:py-20">
+        <div className="flex flex-col md:flex-row items-center md:justify-between gap-8 md:gap-12">
           {/* Text Content */}
-          <div className="flex-1 text-white space-y-6">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold">
+          <div className="flex-1 text-white space-y-4 sm:space-y-6 text-center md:text-left w-full">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight break-words">
               {fullName || 'Your Name'}
             </h1>
-            <h2 className="text-2xl md:text-3xl lg:text-4xl text-blue-400">
+            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-blue-400 leading-tight">
               {tagline || 'Full Stack Developer'}
             </h2>
-            <p className="text-lg md:text-xl text-gray-300 max-w-2xl">
+            <p className="text-base sm:text-lg md:text-xl text-gray-300 max-w-2xl mx-auto md:mx-0">
               {bio || 'Welcome to my portfolio'}
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-wrap gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 justify-center md:justify-start w-full">
               <Link
                 href="/portfolio/projects"
-                className="px-8 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition-colors"
+                className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition-colors text-center"
               >
                 View Projects
               </Link>
               <Link
                 href="/contact"
-                className="px-8 py-3 bg-transparent border-2 border-white hover:bg-white hover:text-gray-900 rounded-lg font-semibold transition-colors"
+                className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-transparent border-2 border-white hover:bg-white hover:text-gray-900 rounded-lg font-semibold transition-colors text-center"
               >
                 Contact Me
               </Link>
@@ -55,7 +55,7 @@ export default function Hero({
 
             {/* Social Links */}
             {(linkedinUrl || githubUrl || twitterUrl) && (
-              <div className="flex gap-4 pt-6">
+              <div className="flex gap-4 pt-6 justify-center md:justify-start">
                 {githubUrl && (
                   <a
                     href={githubUrl}
@@ -98,8 +98,8 @@ export default function Hero({
 
           {/* Profile Image */}
           {profileImageUrl && (
-            <div className="flex-shrink-0">
-              <div className="w-64 h-64 md:w-80 md:h-80 rounded-full overflow-hidden border-4 border-blue-500 shadow-2xl">
+            <div className="flex-shrink-0 w-full md:w-auto flex justify-center">
+              <div className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 lg:w-80 lg:h-80 rounded-full overflow-hidden border-4 border-blue-500 shadow-2xl">
                 <img
                   src={profileImageUrl}
                   alt={fullName}
