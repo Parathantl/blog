@@ -9,6 +9,7 @@ interface ImageUploadProps {
   value: string;
   onChange: (url: string) => void;
   uploadEndpoint?: string;
+  folder?: 'blog' | 'posts' | 'projects' | 'profiles';
   preview?: boolean;
 }
 
@@ -16,9 +17,12 @@ export default function ImageUpload({
   label,
   value,
   onChange,
-  uploadEndpoint = `${API_BASE_URL}/post/upload-photo`,
+  uploadEndpoint,
+  folder = 'blog',
   preview = true,
 }: ImageUploadProps) {
+  // Build endpoint with folder query parameter
+  const finalEndpoint = uploadEndpoint || `${API_BASE_URL}/post/upload-photo?folder=${folder}`;
   const [uploading, setUploading] = useState(false);
   const [inputMode, setInputMode] = useState<'url' | 'upload'>('url');
 
@@ -45,7 +49,7 @@ export default function ImageUpload({
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch(uploadEndpoint, {
+      const response = await fetch(finalEndpoint, {
         method: 'POST',
         body: formData,
         credentials: 'include',
