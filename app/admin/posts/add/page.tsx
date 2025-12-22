@@ -3,46 +3,58 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import axios from 'axios';
 import { toast } from 'react-toastify';
 import ImageUpload from '../../../components/ImageUpload';
-import { API_BASE_URL } from '@/app/lib/config';
+import { blogAPI } from '@/app/lib/api';
+import { Category, MasterCategory } from '@/app/types/blog';
 
 const RichTextEditor = dynamic(() => import('../../../components/RichTextEditor'), { ssr: false });
-
-interface Category {
-  id: number;
-  title: string;
-  type: string;
-}
 
 const AddPost: React.FC = () => {
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [categoryId, setCategoryId] = useState<number>(0);
+  const [categoryIds, setCategoryIds] = useState<number[]>([]);
+  const [selectedMasterCategoryId, setSelectedMasterCategoryId] = useState<number>(0);
   const [mainImageUrl, setMainImageUrl] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
+  const [masterCategories, setMasterCategories] = useState<MasterCategory[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    fetchMasterCategories();
     fetchCategories();
   }, []);
 
+  const fetchMasterCategories = async () => {
+    try {
+      const data = await blogAPI.getMasterCategories();
+      setMasterCategories(data);
+      if (data.length > 0) {
+        setSelectedMasterCategoryId(data[0].id);
+      }
+    } catch (error) {
+      console.error('Error fetching master categories:', error);
+      toast.error('Failed to load master categories');
+    }
+  };
+
   const fetchCategories = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/category`, {
-        withCredentials: true,
-      });
-      setCategories(response.data);
-      // Set default category if available
-      if (response.data.length > 0) {
-        setCategoryId(response.data[0].id);
-      }
+      const data = await blogAPI.getCategories();
+      setCategories(data);
     } catch (error) {
       console.error('Error fetching categories:', error);
       toast.error('Failed to load categories');
     }
+  };
+
+  const handleCategoryToggle = (categoryId: number) => {
+    setCategoryIds(prev =>
+      prev.includes(categoryId)
+        ? prev.filter(id => id !== categoryId)
+        : [...prev, categoryId]
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,41 +70,35 @@ const AddPost: React.FC = () => {
       return;
     }
 
-    if (!categoryId) {
-      toast.error('Please select a category');
+    if (categoryIds.length === 0) {
+      toast.error('Please select at least one category');
       return;
     }
 
     setLoading(true);
 
     try {
-      await axios.post(`${API_BASE_URL}/post`, {
+      await blogAPI.createPost({
         title,
         content,
-        mainImageUrl: mainImageUrl || 'default-image.jpg',
-        categoryId,
-      }, {
-        withCredentials: true,
+        mainImageUrl: mainImageUrl || undefined,
+        categoryIds,
       });
 
       toast.success('Post created successfully!');
       router.push('/admin/posts');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating post:', error);
-      toast.error('Failed to create post');
+      toast.error(error?.response?.data?.message || 'Failed to create post');
     } finally {
       setLoading(false);
     }
   };
 
-  const getCategoryBadgeColor = (type: string) => {
-    const colors: Record<string, string> = {
-      'tamil-blog': 'bg-orange-100 text-orange-800',
-      'technical-blog': 'bg-blue-100 text-blue-800',
-      'blog': 'bg-gray-100 text-gray-800',
-    };
-    return colors[type] || 'bg-gray-100 text-gray-800';
-  };
+  // Filter categories by selected master category
+  const filteredCategories = categories.filter(
+    cat => cat.masterCategoryId === selectedMasterCategoryId
+  );
 
   return (
     <div className="max-w-4xl">
@@ -123,35 +129,84 @@ const AddPost: React.FC = () => {
             />
           </div>
 
-          {/* Category */}
+          {/* Master Category Selection */}
           <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Category *
+            <label htmlFor="masterCategory" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Blog Type *
             </label>
             <select
-              id="category"
-              value={categoryId}
-              onChange={(e) => setCategoryId(parseInt(e.target.value))}
+              id="masterCategory"
+              value={selectedMasterCategoryId}
+              onChange={(e) => {
+                setSelectedMasterCategoryId(parseInt(e.target.value));
+                setCategoryIds([]); // Reset selected categories when changing master category
+              }}
               required
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             >
-              <option value={0}>Select a category</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.title} - {category.type}
+              {masterCategories.map((mc) => (
+                <option key={mc.id} value={mc.id}>
+                  {mc.name}
                 </option>
               ))}
             </select>
-            <div className="flex gap-2 mt-2">
-              {categories.map((category) => (
-                <span
-                  key={category.id}
-                  className={`px-3 py-1 text-xs rounded-full ${getCategoryBadgeColor(category.type)}`}
-                >
-                  {category.title}
-                </span>
-              ))}
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Select which blog this post belongs to (Tech, Tamil, etc.)
+            </p>
+          </div>
+
+          {/* Categories - Multi-select */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Categories * (Select one or more)
+            </label>
+            <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 max-h-60 overflow-y-auto">
+              {filteredCategories.length === 0 ? (
+                <p className="text-gray-500 dark:text-gray-400 text-sm">
+                  No categories available for this blog type. Please create categories first.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {filteredCategories.map((category) => (
+                    <label
+                      key={category.id}
+                      className="flex items-center p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={categoryIds.includes(category.id)}
+                        onChange={() => handleCategoryToggle(category.id)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <span className="ml-3 text-gray-900 dark:text-white">
+                        {category.title}
+                      </span>
+                      {category.description && (
+                        <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                          - {category.description}
+                        </span>
+                      )}
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
+            {categoryIds.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                <span className="text-xs text-gray-600 dark:text-gray-400">Selected:</span>
+                {categoryIds.map(id => {
+                  const cat = categories.find(c => c.id === id);
+                  return cat ? (
+                    <span
+                      key={id}
+                      className="px-3 py-1 text-xs rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
+                    >
+                      {cat.title}
+                    </span>
+                  ) : null;
+                })}
+              </div>
+            )}
           </div>
 
           {/* Featured Image */}

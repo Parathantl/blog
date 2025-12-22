@@ -1,23 +1,10 @@
 import Link from 'next/link';
 import DOMPurify from 'dompurify';
+import { Post } from '@/app/types/blog';
 
 interface BlogCardProps {
-  post: {
-    id: number;
-    title: string;
-    content: string;
-    slug: string;
-    createdOn: string;
-    mainImageUrl?: string;
-    user?: {
-      firstname: string;
-      lastname: string;
-      profilePic?: string;
-    };
-    category?: {
-      title: string;
-      type?: string;
-    };
+  post: Post & {
+    createdOn?: string; // Legacy field name support
   };
 }
 
@@ -46,12 +33,13 @@ export default function BlogCard({ post }: BlogCardProps) {
     return text.length > 150 ? text.substring(0, 150) + '...' : text;
   };
 
-  // Get category color
-  const getCategoryColor = (type?: string) => {
-    switch (type) {
-      case 'tamil-blog':
+  // Get category color based on master category
+  const getCategoryColor = (masterCategoryName?: string) => {
+    switch (masterCategoryName?.toLowerCase()) {
+      case 'tamil':
         return 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200';
-      case 'technical-blog':
+      case 'tech':
+      case 'technical':
         return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200';
       default:
         return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200';
@@ -74,13 +62,18 @@ export default function BlogCard({ post }: BlogCardProps) {
       )}
 
       <div className="p-6">
-        {/* Category Badge */}
-        {post.category && (
-          <span
-            className={`inline-block px-3 py-1 text-sm font-semibold rounded-full mb-3 ${getCategoryColor(post.category.type)}`}
-          >
-            {post.category.title}
-          </span>
+        {/* Category Badges */}
+        {post.categories && post.categories.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {post.categories.map((category) => (
+              <span
+                key={category.id}
+                className={`inline-block px-3 py-1 text-sm font-semibold rounded-full ${getCategoryColor(category.masterCategory?.name)}`}
+              >
+                {category.title}
+              </span>
+            ))}
+          </div>
         )}
 
         {/* Title */}
@@ -117,7 +110,7 @@ export default function BlogCard({ post }: BlogCardProps) {
 
           {/* Date and Read Time */}
           <div className="flex items-center gap-3">
-            <span>{formatDate(post.createdOn)}</span>
+            <span>{formatDate(post.createdAt || post.createdOn || '')}</span>
             <span>•</span>
             <span>{calculateReadTime(post.content)}</span>
           </div>

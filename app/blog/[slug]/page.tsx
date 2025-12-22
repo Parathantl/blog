@@ -5,27 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import DOMPurify from 'dompurify';
 import { blogAPI } from '@/app/lib/api';
-
-interface Post {
-  id: number;
-  title: string;
-  content: string;
-  slug: string;
-  createdOn: string;
-  modifiedOn: string;
-  mainImageUrl?: string;
-  user?: {
-    firstname: string;
-    lastname: string;
-    profilePic?: string;
-    email: string;
-  };
-  category?: {
-    id: number;
-    title: string;
-    type?: string;
-  };
-}
+import { Post } from '@/app/types/blog';
 
 export default function SingleBlogPost() {
   const params = useParams();
@@ -153,20 +133,24 @@ export default function SingleBlogPost() {
 
           {/* Article Header */}
           <header className="mb-8">
-            {/* Category Badge */}
-            {post.category && (
-              <Link
-                href={
-                  post.category.type === 'tamil-blog'
-                    ? '/blog/tamil'
-                    : post.category.type === 'technical-blog'
-                    ? '/blog/tech'
-                    : '/blog'
-                }
-                className="inline-block px-4 py-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full font-semibold mb-4 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
-              >
-                {post.category.title}
-              </Link>
+            {/* Category Badges */}
+            {post.categories && post.categories.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {post.categories.map((category) => {
+                  const masterCategorySlug = category.masterCategory?.slug || 'blog';
+                  const blogPath = `/blog/${masterCategorySlug}`;
+
+                  return (
+                    <Link
+                      key={category.id}
+                      href={blogPath}
+                      className="inline-block px-4 py-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full font-semibold hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                    >
+                      {category.title}
+                    </Link>
+                  );
+                })}
+              </div>
             )}
 
             {/* Title */}
@@ -195,7 +179,7 @@ export default function SingleBlogPost() {
               </div>
 
               <span>•</span>
-              <span>{formatDate(post.createdOn)}</span>
+              <span>{formatDate(post.createdAt || post.createdOn || '')}</span>
               <span>•</span>
               <span>{calculateReadTime(post.content)}</span>
             </div>

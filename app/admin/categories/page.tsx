@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { API_BASE_URL } from '@/app/lib/config';
+import { blogAPI } from '@/app/lib/api';
+import { Category as CategoryType, MasterCategory } from '@/app/types/blog';
 import {
   DndContext,
   closestCenter,
@@ -21,28 +23,15 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-interface Category {
-  id: number;
-  title: string;
-  description: string;
-  type: string;
-  slug: string;
-  displayOrder: number;
-}
-
 // Sortable Category Item Component
 function SortableCategoryItem({
   category,
   onEdit,
   onDelete,
-  getTypeLabel,
-  getTypeBadgeColor,
 }: {
-  category: Category;
-  onEdit: (category: Category) => void;
+  category: CategoryType;
+  onEdit: (category: CategoryType) => void;
   onDelete: (id: number) => void;
-  getTypeLabel: (type: string) => string;
-  getTypeBadgeColor: (type: string) => string;
 }) {
   const {
     attributes,
@@ -94,9 +83,11 @@ function SortableCategoryItem({
           <h3 className="text-xl font-bold text-gray-900 dark:text-white">
             {category.title}
           </h3>
-          <span className={`px-3 py-1 text-xs rounded-full ${getTypeBadgeColor(category.type)}`}>
-            {getTypeLabel(category.type)}
-          </span>
+          {category.masterCategory && (
+            <span className="px-3 py-1 text-xs rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+              {category.masterCategory.name}
+            </span>
+          )}
           <span className="text-sm text-gray-500 dark:text-gray-400">
             /{category.slug}
           </span>
@@ -126,14 +117,15 @@ function SortableCategoryItem({
 }
 
 export default function CategoriesManagement() {
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<CategoryType[]>([]);
+  const [masterCategories, setMasterCategories] = useState<MasterCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    type: 'blog',
+    masterCategoryId: 0,
     slug: '',
     displayOrder: 1,
   });
@@ -148,25 +140,28 @@ export default function CategoriesManagement() {
 
   useEffect(() => {
     fetchCategories();
+    fetchMasterCategories();
   }, []);
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/category`, {
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch categories');
-      }
-
-      const data = await response.json();
+      const data = await blogAPI.getCategories();
       setCategories(data);
     } catch (error) {
       console.error('Error fetching categories:', error);
       toast.error('Failed to load categories');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMasterCategories = async () => {
+    try {
+      const data = await blogAPI.getMasterCategories();
+      setMasterCategories(data);
+    } catch (error) {
+      console.error('Error fetching master categories:', error);
+      toast.error('Failed to load master categories');
     }
   };
 
@@ -185,7 +180,7 @@ export default function CategoriesManagement() {
     setFormData({
       title: '',
       description: '',
-      type: 'blog',
+      masterCategoryId: masterCategories.length > 0 ? masterCategories[0].id : 0,
       slug: '',
       displayOrder: 1,
     });
@@ -197,24 +192,16 @@ export default function CategoriesManagement() {
     e.preventDefault();
 
     try {
-      const url = editingId
-        ? `${API_BASE_URL}/category/${editingId}`
-        : `${API_BASE_URL}/category`;
+      const data = {
+        ...formData,
+        masterCategoryId: parseInt(formData.masterCategoryId.toString()),
+        displayOrder: parseInt(formData.displayOrder.toString()),
+      };
 
-      const response = await fetch(url, {
-        method: editingId ? 'PATCH' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          ...formData,
-          displayOrder: parseInt(formData.displayOrder.toString()),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to ${editingId ? 'update' : 'create'} category`);
+      if (editingId) {
+        await blogAPI.updateCategory(editingId, data);
+      } else {
+        await blogAPI.createCategory(data);
       }
 
       toast.success(`Category ${editingId ? 'updated' : 'created'} successfully!`);
@@ -226,11 +213,11 @@ export default function CategoriesManagement() {
     }
   };
 
-  const handleEdit = (category: Category) => {
+  const handleEdit = (category: CategoryType) => {
     setFormData({
       title: category.title,
       description: category.description,
-      type: category.type,
+      masterCategoryId: category.masterCategoryId,
       slug: category.slug,
       displayOrder: category.displayOrder,
     });
@@ -242,10 +229,7 @@ export default function CategoriesManagement() {
     if (!confirm('Are you sure you want to delete this category?')) return;
 
     try {
-      await fetch(`${API_BASE_URL}/category/${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
+      await blogAPI.deleteCategory(id);
       toast.success('Category deleted successfully');
       fetchCategories();
     } catch (error) {
@@ -278,23 +262,12 @@ export default function CategoriesManagement() {
 
     // Send update to backend
     try {
-      const response = await fetch(`${API_BASE_URL}/category/reorder`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          categories: updatedCategories.map((cat) => ({
-            id: cat.id,
-            displayOrder: cat.displayOrder,
-          })),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to reorder categories');
-      }
+      await blogAPI.reorderCategories(
+        updatedCategories.map((cat) => ({
+          id: cat.id,
+          displayOrder: cat.displayOrder,
+        }))
+      );
 
       toast.success('Categories reordered successfully!');
     } catch (error) {
@@ -303,24 +276,6 @@ export default function CategoriesManagement() {
       // Revert to original order on error
       fetchCategories();
     }
-  };
-
-  const getTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      'blog': 'General Blog',
-      'tamil-blog': 'Tamil Blog',
-      'technical-blog': 'Technical Blog',
-    };
-    return labels[type] || type;
-  };
-
-  const getTypeBadgeColor = (type: string) => {
-    const colors: Record<string, string> = {
-      'blog': 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
-      'tamil-blog': 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200',
-      'technical-blog': 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
-    };
-    return colors[type] || 'bg-gray-100 text-gray-800';
   };
 
   return (
@@ -367,18 +322,21 @@ export default function CategoriesManagement() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Type *
+                  Master Category *
                 </label>
                 <select
-                  name="type"
-                  value={formData.type}
+                  name="masterCategoryId"
+                  value={formData.masterCategoryId}
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                 >
-                  <option value="blog">General Blog</option>
-                  <option value="tamil-blog">Tamil Blog</option>
-                  <option value="technical-blog">Technical Blog</option>
+                  <option value="">Select Master Category</option>
+                  {masterCategories.map((mc) => (
+                    <option key={mc.id} value={mc.id}>
+                      {mc.name}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -483,8 +441,6 @@ export default function CategoriesManagement() {
                   category={category}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
-                  getTypeLabel={getTypeLabel}
-                  getTypeBadgeColor={getTypeBadgeColor}
                 />
               ))}
             </div>

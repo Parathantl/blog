@@ -38,7 +38,7 @@ export default function TamilBlogPage() {
         </div>
 
         {/* Tamil Blog Posts */}
-        <BlogList categoryType="tamil-blog" />
+        <BlogList masterCategorySlug="tamil" />
       </div>
     </div>
   );

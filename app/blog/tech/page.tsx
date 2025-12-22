@@ -38,7 +38,7 @@ export default function TechBlogPage() {
         </div>
 
         {/* Tech Blog Posts */}
-        <BlogList categoryType="technical-blog" />
+        <BlogList masterCategorySlug="tech" />
       </div>
     </div>
   );

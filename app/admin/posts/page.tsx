@@ -4,35 +4,17 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'react-toastify';
 import { blogAPI } from '@/app/lib/api';
-import { API_BASE_URL } from '@/app/lib/config';
-
-interface Post {
-  id: number;
-  title: string;
-  content: string;
-  slug: string;
-  excerpt?: string;
-  imageUrl?: string;
-  category: {
-    id: number;
-    name: string;
-    type: string;
-  };
-  user: {
-    id: number;
-    username: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
+import { Post, MasterCategory } from '@/app/types/blog';
 
 export default function PostsManagement() {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [masterCategories, setMasterCategories] = useState<MasterCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'tamil' | 'technical'>('all');
+  const [filter, setFilter] = useState<string>('all');
 
   useEffect(() => {
     fetchPosts();
+    fetchMasterCategories();
   }, []);
 
   const fetchPosts = async () => {
@@ -47,14 +29,20 @@ export default function PostsManagement() {
     }
   };
 
+  const fetchMasterCategories = async () => {
+    try {
+      const data = await blogAPI.getMasterCategories();
+      setMasterCategories(data);
+    } catch (error) {
+      console.error('Error fetching master categories:', error);
+    }
+  };
+
   const handleDelete = async (id: number) => {
     if (!confirm('Are you sure you want to delete this post?')) return;
 
     try {
-      await fetch(`${API_BASE_URL}/posts/${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
+      await blogAPI.deletePost(id);
       toast.success('Post deleted successfully');
       fetchPosts();
     } catch (error) {
@@ -71,23 +59,33 @@ export default function PostsManagement() {
     });
   };
 
-  const getCategoryBadgeColor = (type: string) => {
-    const colors: Record<string, string> = {
-      'tamil-blog': 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200',
-      'technical-blog': 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
-      'blog': 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
-    };
-    return colors[type] || 'bg-gray-100 text-gray-800';
+  const getCategoryBadgeColor = (masterCategoryName?: string) => {
+    switch (masterCategoryName?.toLowerCase()) {
+      case 'tamil':
+        return 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200';
+      case 'tech':
+      case 'technical':
+        return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200';
+      default:
+        return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200';
+    }
   };
 
   const filteredPosts = posts.filter((post) => {
-    if (filter === 'tamil') return post.category.type === 'tamil-blog';
-    if (filter === 'technical') return post.category.type === 'technical-blog';
-    return true;
+    if (filter === 'all') return true;
+
+    // Check if post has any category from the selected master category
+    return post.categories?.some(
+      cat => cat.masterCategory?.slug === filter || cat.masterCategoryId.toString() === filter
+    );
   });
 
-  const tamilCount = posts.filter(p => p.category.type === 'tamil-blog').length;
-  const technicalCount = posts.filter(p => p.category.type === 'technical-blog').length;
+  // Count posts per master category
+  const countPostsForMasterCategory = (masterCategorySlug: string) => {
+    return posts.filter(post =>
+      post.categories?.some(cat => cat.masterCategory?.slug === masterCategorySlug)
+    ).length;
+  };
 
   return (
     <div className="max-w-7xl">
@@ -97,7 +95,7 @@ export default function PostsManagement() {
             Blog Posts
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Manage all your blog posts across Tamil and Technical categories
+            Manage all your blog posts across different categories
           </p>
         </div>
         <Link
@@ -120,26 +118,19 @@ export default function PostsManagement() {
         >
           All Posts ({posts.length})
         </button>
-        <button
-          onClick={() => setFilter('tamil')}
-          className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-            filter === 'tamil'
-              ? 'bg-orange-600 text-white'
-              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-          }`}
-        >
-          Tamil Blog ({tamilCount})
-        </button>
-        <button
-          onClick={() => setFilter('technical')}
-          className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-            filter === 'technical'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-          }`}
-        >
-          Technical Blog ({technicalCount})
-        </button>
+        {masterCategories.map((mc) => (
+          <button
+            key={mc.id}
+            onClick={() => setFilter(mc.slug)}
+            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+              filter === mc.slug
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+            }`}
+          >
+            {mc.name} ({countPostsForMasterCategory(mc.slug)})
+          </button>
+        ))}
       </div>
 
       {loading ? (
@@ -155,9 +146,9 @@ export default function PostsManagement() {
       ) : filteredPosts.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-lg p-12 text-center">
           <p className="text-gray-600 dark:text-gray-400 mb-4">
-            {filter === 'tamil' ? 'No Tamil posts yet.' :
-             filter === 'technical' ? 'No Technical posts yet.' :
-             'No posts yet. Write your first post to get started!'}
+            {filter !== 'all'
+              ? `No posts in ${masterCategories.find(mc => mc.slug === filter)?.name || 'this category'} yet.`
+              : 'No posts yet. Write your first post to get started!'}
           </p>
           <Link
             href="/admin/posts/add"
@@ -177,10 +168,10 @@ export default function PostsManagement() {
               >
                 <div className="flex flex-col md:flex-row gap-6">
                   {/* Post Image */}
-                  {post.imageUrl && (
+                  {post.mainImageUrl && (
                     <div className="flex-shrink-0">
                       <img
-                        src={post.imageUrl}
+                        src={post.mainImageUrl}
                         alt={post.title}
                         className="w-full md:w-48 h-48 md:h-32 object-cover rounded-lg"
                       />
@@ -191,13 +182,21 @@ export default function PostsManagement() {
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-2">
+                        <div className="flex flex-col sm:flex-row sm:items-start gap-3 mb-2">
                           <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                             {post.title}
                           </h3>
-                          <span className={`px-3 py-1 text-xs rounded-full self-start ${getCategoryBadgeColor(post.category.type)}`}>
-                            {post.category.name}
-                          </span>
+                          {/* Multiple Category Badges */}
+                          <div className="flex flex-wrap gap-2">
+                            {post.categories?.map((category) => (
+                              <span
+                                key={category.id}
+                                className={`px-3 py-1 text-xs rounded-full ${getCategoryBadgeColor(category.masterCategory?.name)}`}
+                              >
+                                {category.title}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                         {post.excerpt && (
                           <p className="text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
@@ -205,7 +204,7 @@ export default function PostsManagement() {
                           </p>
                         )}
                         <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                          <span>By {post.user.username}</span>
+                          <span>By {post.user?.username || 'Author'}</span>
                           <span>•</span>
                           <span>{formatDate(post.createdAt)}</span>
                           {post.createdAt !== post.updatedAt && (

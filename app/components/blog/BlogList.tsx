@@ -3,62 +3,42 @@
 import { useEffect, useState } from 'react';
 import BlogCard from './BlogCard';
 import { blogAPI } from '@/app/lib/api';
-
-interface Post {
-  id: number;
-  title: string;
-  content: string;
-  slug: string;
-  createdOn: string;
-  mainImageUrl?: string;
-  user?: {
-    firstname: string;
-    lastname: string;
-    profilePic?: string;
-  };
-  category?: {
-    id: number;
-    title: string;
-    type?: string;
-  };
-}
+import { Post, Category } from '@/app/types/blog';
 
 interface BlogListProps {
-  categoryType?: string; // 'tamil-blog', 'technical-blog', or undefined for all
+  masterCategorySlug?: string; // 'tech', 'tamil', or undefined for all
   limit?: number;
 }
 
-export default function BlogList({ categoryType, limit }: BlogListProps) {
+export default function BlogList({ masterCategorySlug, limit }: BlogListProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
 
-        // Fetch posts
-        const postsData = await blogAPI.getPosts({ date: 'desc' });
+        // Build query params for filtering
+        const queryParams: any = {};
+        if (masterCategorySlug) {
+          queryParams.masterCategory = masterCategorySlug;
+        }
+
+        // Fetch posts with master category filter
+        const postsData = await blogAPI.getPosts(queryParams);
 
         // Fetch categories
         const categoriesData = await blogAPI.getCategories();
         setCategories(categoriesData);
 
-        // Filter by category type if specified
-        let filteredData = postsData;
-        if (categoryType) {
-          filteredData = postsData.filter(
-            (post: Post) => post.category?.type === categoryType
-          );
-        }
-
         // Apply limit if specified
-        const postsToShow = limit ? filteredData.slice(0, limit) : filteredData;
+        const postsToShow = limit ? postsData.slice(0, limit) : postsData;
 
         setPosts(postsToShow);
         setFilteredPosts(postsToShow);
@@ -71,7 +51,7 @@ export default function BlogList({ categoryType, limit }: BlogListProps) {
     };
 
     fetchData();
-  }, [categoryType, limit]);
+  }, [masterCategorySlug, limit]);
 
   // Handle search and category filter
   useEffect(() => {
@@ -87,13 +67,18 @@ export default function BlogList({ categoryType, limit }: BlogListProps) {
 
     // Apply category filter
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter(
-        (post) => post.category?.id === parseInt(selectedCategory)
+      filtered = filtered.filter((post) =>
+        post.categories?.some(cat => cat.id === parseInt(selectedCategory))
       );
     }
 
     setFilteredPosts(filtered);
   }, [searchQuery, selectedCategory, posts]);
+
+  // Filter categories for dropdown (only show categories from current master category)
+  const availableCategories = masterCategorySlug
+    ? categories.filter(cat => cat.masterCategory?.slug === masterCategorySlug)
+    : categories;
 
   if (loading) {
     return (
@@ -119,7 +104,7 @@ export default function BlogList({ categoryType, limit }: BlogListProps) {
   return (
     <div>
       {/* Search and Filter Controls */}
-      {!categoryType && (
+      {!masterCategorySlug && (
         <div className="mb-8 flex flex-col md:flex-row gap-4">
           {/* Search */}
           <input
@@ -137,7 +122,7 @@ export default function BlogList({ categoryType, limit }: BlogListProps) {
             className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           >
             <option value="all">All Categories</option>
-            {categories.map((category) => (
+            {availableCategories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.title}
               </option>
