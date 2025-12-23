@@ -120,19 +120,38 @@ export default function SingleBlogPost() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-12">
-      <article className="container mx-auto px-6">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-6 md:py-12">
+      <style jsx>{`
+        /* Fix Quill editor inline styles for responsive images */
+        .blog-content img {
+          max-width: 100% !important;
+          height: auto !important;
+          cursor: pointer !important;
+          display: block;
+          margin-left: auto;
+          margin-right: auto;
+        }
+
+        /* Remove width attribute effect on mobile */
+        @media (max-width: 768px) {
+          .blog-content img {
+            width: 100% !important;
+          }
+        }
+      `}</style>
+
+      <article className="container mx-auto px-4 md:px-6">
         <div className="max-w-4xl mx-auto">
           {/* Back Link */}
           <Link
             href="/blog"
-            className="inline-block text-blue-600 dark:text-blue-400 hover:underline mb-6"
+            className="inline-block text-blue-600 dark:text-blue-400 hover:underline mb-4 md:mb-6 text-sm md:text-base"
           >
             ← Back to Blog
           </Link>
 
           {/* Article Header */}
-          <header className="mb-8">
+          <header className="mb-6 md:mb-8">
             {/* Category Badges */}
             {post.categories && post.categories.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-4">
@@ -144,7 +163,7 @@ export default function SingleBlogPost() {
                     <Link
                       key={category.id}
                       href={blogPath}
-                      className="inline-block px-4 py-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full font-semibold hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                      className="inline-block px-3 py-1.5 md:px-4 md:py-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm md:text-base font-semibold hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
                     >
                       {category.title}
                     </Link>
@@ -154,22 +173,22 @@ export default function SingleBlogPost() {
             )}
 
             {/* Title */}
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+            <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
               {post.title}
             </h1>
 
             {/* Meta Information */}
-            <div className="flex items-center gap-6 text-gray-600 dark:text-gray-400 mb-6">
+            <div className="flex flex-wrap items-center gap-3 md:gap-6 text-sm md:text-base text-gray-600 dark:text-gray-400 mb-6">
               {/* Author */}
               <div className="flex items-center gap-2">
                 {post.user?.profilePic ? (
                   <img
                     src={post.user.profilePic}
                     alt={`${post.user.firstname} ${post.user.lastname}`}
-                    className="w-10 h-10 rounded-full"
+                    className="w-8 h-8 md:w-10 md:h-10 rounded-full"
                   />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">
+                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold text-sm">
                     {post.user?.firstname?.charAt(0) || 'A'}
                   </div>
                 )}
@@ -178,10 +197,10 @@ export default function SingleBlogPost() {
                 </span>
               </div>
 
-              <span>•</span>
-              <span>{formatDate(post.createdAt || post.createdOn || '')}</span>
-              <span>•</span>
-              <span>{calculateReadTime(post.content)}</span>
+              <span className="hidden sm:inline">•</span>
+              <span className="text-xs md:text-sm">{formatDate(post.createdAt || post.createdOn || '')}</span>
+              <span className="hidden sm:inline">•</span>
+              <span className="text-xs md:text-sm">{calculateReadTime(post.content)}</span>
             </div>
 
             {/* Featured Image */}
@@ -189,31 +208,32 @@ export default function SingleBlogPost() {
               <img
                 src={post.mainImageUrl}
                 alt={post.title}
-                className="w-full h-96 object-cover rounded-lg shadow-lg"
+                className="w-full h-48 md:h-96 object-cover rounded-lg shadow-lg"
               />
             )}
           </header>
 
           {/* Article Content */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 md:p-12">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 md:p-8 lg:p-12">
             <div
-              className="prose dark:prose-invert max-w-none prose-lg
+              className="blog-content prose dark:prose-invert max-w-none prose-sm md:prose-lg
                 prose-headings:text-gray-900 dark:prose-headings:text-white
                 prose-p:text-gray-700 dark:prose-p:text-gray-300
                 prose-a:text-blue-600 dark:prose-a:text-blue-400
                 prose-strong:text-gray-900 dark:prose-strong:text-white
                 prose-code:text-gray-900 dark:prose-code:text-white
                 prose-pre:bg-gray-100 dark:prose-pre:bg-gray-900
-                prose-img:cursor-pointer prose-img:rounded-lg prose-img:shadow-md prose-img:transition-transform prose-img:hover:scale-[1.02]"
+                prose-img:rounded-lg prose-img:shadow-md prose-img:transition-transform prose-img:hover:scale-[1.02]
+                prose-headings:leading-tight prose-p:leading-relaxed"
               dangerouslySetInnerHTML={{ __html: sanitizedContent }}
             />
           </div>
 
           {/* Footer */}
-          <div className="mt-12 text-center">
+          <div className="mt-8 md:mt-12 text-center">
             <Link
               href="/blog"
-              className="inline-block px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+              className="inline-block px-6 py-2.5 md:px-8 md:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors text-sm md:text-base"
             >
               View More Posts
             </Link>
@@ -224,18 +244,18 @@ export default function SingleBlogPost() {
       {/* Image Lightbox Modal */}
       {lightboxImage && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-2 md:p-4 backdrop-blur-sm"
           onClick={() => setLightboxImage(null)}
         >
-          <div className="relative max-w-7xl max-h-full">
+          <div className="relative max-w-7xl max-h-full w-full">
             {/* Close Button */}
             <button
               onClick={() => setLightboxImage(null)}
-              className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors"
+              className="absolute -top-10 md:-top-12 right-0 text-white hover:text-gray-300 transition-colors z-10"
               aria-label="Close"
             >
               <svg
-                className="w-10 h-10"
+                className="w-8 h-8 md:w-10 md:h-10"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -253,12 +273,12 @@ export default function SingleBlogPost() {
             <img
               src={lightboxImage}
               alt="Enlarged view"
-              className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+              className="max-w-full max-h-[85vh] md:max-h-[90vh] w-auto h-auto object-contain rounded-lg shadow-2xl mx-auto"
               onClick={(e) => e.stopPropagation()}
             />
 
             {/* Hint Text */}
-            <p className="text-center text-white text-sm mt-4 opacity-75">
+            <p className="text-center text-white text-xs md:text-sm mt-2 md:mt-4 opacity-75">
               Click outside or press ESC to close
             </p>
           </div>
