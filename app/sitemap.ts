@@ -1,12 +1,33 @@
 import { MetadataRoute } from 'next';
 import { Post } from './types/blog';
 
+// Force dynamic generation - sitemap should be generated on request, not at build time
+export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // Revalidate every hour
+
 // Get the site URL from environment or use a default
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://yourdomain.com';
 
-// For sitemap generation, we need the full public URL (not relative /api)
-// This is used at build time when relative URLs don't work
-const API_URL = `${SITE_URL}/api`;
+// For server-side API calls (sitemap generation):
+// - In Docker: Use internal Docker network URL (http://backend:3001)
+// - In development: Use localhost
+// - Fallback: Use public API endpoint
+const getApiUrl = () => {
+  // Docker internal network (preferred for server-side calls in production)
+  if (process.env.INTERNAL_API_URL) {
+    return process.env.INTERNAL_API_URL;
+  }
+
+  // Development
+  if (process.env.NODE_ENV === 'development') {
+    return 'http://localhost:3001';
+  }
+
+  // Fallback to public URL
+  return `${SITE_URL}/api`;
+};
+
+const API_URL = getApiUrl();
 
 interface Project {
   id: number;
@@ -82,12 +103,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fetch blog posts - add to sitemap if successful
   let blogPosts: MetadataRoute.Sitemap = [];
   try {
+    console.log(`[Sitemap] Fetching blog posts from: ${API_URL}/post`);
     const postsResponse = await fetch(`${API_URL}/post`, {
-      next: { revalidate: 3600 }, // Revalidate every hour
+      cache: 'no-store', // Ensure we get fresh data
     });
 
     if (postsResponse.ok) {
       const posts: Post[] = await postsResponse.json();
+      console.log(`[Sitemap] Successfully fetched ${posts.length} blog posts`);
       blogPosts = posts.map((post) => ({
         url: `${SITE_URL}/blog/${post.slug}`,
         lastModified: post.updatedAt || post.createdAt,
@@ -95,21 +118,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.8,
       }));
     } else {
-      console.warn('Failed to fetch blog posts for sitemap:', postsResponse.status);
+      console.warn(`[Sitemap] Failed to fetch blog posts: HTTP ${postsResponse.status}`);
     }
   } catch (error) {
-    console.error('Error fetching blog posts for sitemap:', error);
+    console.error('[Sitemap] Error fetching blog posts:', error);
   }
 
   // Fetch projects - add to sitemap if successful
   let projectPages: MetadataRoute.Sitemap = [];
   try {
+    console.log(`[Sitemap] Fetching projects from: ${API_URL}/portfolio/projects`);
     const projectsResponse = await fetch(`${API_URL}/portfolio/projects`, {
-      next: { revalidate: 3600 },
+      cache: 'no-store', // Ensure we get fresh data
     });
 
     if (projectsResponse.ok) {
       const projects: Project[] = await projectsResponse.json();
+      console.log(`[Sitemap] Successfully fetched ${projects.length} projects`);
       projectPages = projects.map((project) => ({
         url: `${SITE_URL}/portfolio/projects/${project.id}`,
         lastModified: project.updatedAt || project.createdAt,
@@ -117,11 +142,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.7,
       }));
     } else {
-      console.warn('Failed to fetch projects for sitemap:', projectsResponse.status);
+      console.warn(`[Sitemap] Failed to fetch projects: HTTP ${projectsResponse.status}`);
     }
   } catch (error) {
-    console.error('Error fetching projects for sitemap:', error);
+    console.error('[Sitemap] Error fetching projects:', error);
   }
 
-  return [...staticPages, ...blogPosts, ...projectPages];
+  const totalUrls = [...staticPages, ...blogPosts, ...projectPages];
+  console.log(`[Sitemap] Generated sitemap with ${totalUrls.length} URLs (${staticPages.length} static, ${blogPosts.length} posts, ${projectPages.length} projects)`);
+
+  return totalUrls;
 }
