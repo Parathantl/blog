@@ -195,15 +195,15 @@ export default function SingleBlogPost() {
           }
         }
 
-        /* Enhanced Typography for better readability */
+        /* Optimized Typography for readability */
         .ql-editor {
           font-size: 16px;
-          line-height: 1.75;
+          line-height: 1.6;
         }
 
         .ql-editor p {
-          margin-bottom: 1.5em;
-          line-height: 1.8;
+          margin-bottom: 1em;
+          line-height: 1.6;
         }
 
         .ql-editor h1,
@@ -212,8 +212,8 @@ export default function SingleBlogPost() {
         .ql-editor h4,
         .ql-editor h5,
         .ql-editor h6 {
-          margin-top: 2em;
-          margin-bottom: 0.75em;
+          margin-top: 1.5em;
+          margin-bottom: 0.6em;
           font-weight: 700;
           line-height: 1.3;
         }
@@ -225,16 +225,16 @@ export default function SingleBlogPost() {
         .ql-editor ul,
         .ql-editor ol {
           padding-left: 1.5em;
-          margin-bottom: 1.5em;
+          margin-bottom: 1em;
         }
 
         .ql-editor li {
-          margin-bottom: 0.5em;
-          line-height: 1.75;
+          margin-bottom: 0.3em;
+          line-height: 1.6;
         }
 
         .ql-editor blockquote {
-          margin: 1.5em 0;
+          margin: 1.25em 0;
           padding-left: 1em;
           font-style: italic;
         }
@@ -259,8 +259,8 @@ export default function SingleBlogPost() {
 
         /* Code block container styling - Quill uses div.ql-code-block-container */
         .ql-editor .ql-code-block-container {
-          margin: 2em 0 !important;
-          padding: 1.5em !important;
+          margin: 1.25em 0 !important;
+          padding: 1.25em !important;
           border-radius: 8px !important;
           overflow-x: auto !important;
           background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
@@ -346,11 +346,19 @@ export default function SingleBlogPost() {
           background: rgba(255, 255, 255, 0.4);
         }
 
-        /* Responsive typography */
+        /* Responsive typography - balanced for readability */
         @media (min-width: 768px) {
           .ql-editor {
-            font-size: 18px;
-            line-height: 1.8;
+            font-size: 17px;
+            line-height: 1.7;
+          }
+
+          .ql-editor p {
+            line-height: 1.7;
+          }
+
+          .ql-editor li {
+            line-height: 1.7;
           }
 
           .ql-editor h1 { font-size: 2.25em; }
@@ -360,8 +368,16 @@ export default function SingleBlogPost() {
 
         @media (min-width: 1024px) {
           .ql-editor {
-            font-size: 19px;
-            line-height: 1.85;
+            font-size: 18px;
+            line-height: 1.7;
+          }
+
+          .ql-editor p {
+            line-height: 1.7;
+          }
+
+          .ql-editor li {
+            line-height: 1.7;
           }
 
           .ql-editor h1 { font-size: 2.5em; }
@@ -448,17 +464,16 @@ export default function SingleBlogPost() {
             <div
               className="ql-editor prose dark:prose-invert max-w-none prose-base md:prose-lg lg:prose-xl
                 prose-headings:text-gray-900 dark:prose-headings:text-white
-                prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-p:text-base md:prose-p:text-lg prose-p:leading-relaxed md:prose-p:leading-loose
+                prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-p:text-base md:prose-p:text-lg
                 prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-a:underline hover:prose-a:text-blue-700
                 prose-strong:text-gray-900 dark:prose-strong:text-white prose-strong:font-semibold
                 prose-img:rounded-lg prose-img:shadow-md prose-img:transition-transform prose-img:hover:scale-[1.02]
-                prose-headings:leading-tight prose-headings:mb-4 prose-headings:mt-8
+                prose-headings:leading-snug prose-headings:mb-3 prose-headings:mt-6
                 prose-h1:text-2xl md:prose-h1:text-3xl lg:prose-h1:text-4xl prose-h1:leading-snug
                 prose-h2:text-xl md:prose-h2:text-2xl lg:prose-h2:text-3xl prose-h2:leading-snug
                 prose-h3:text-lg md:prose-h3:text-xl lg:prose-h3:text-2xl prose-h3:leading-snug
-                prose-li:text-base md:prose-li:text-lg prose-li:leading-relaxed prose-li:my-2
-                prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-600 dark:prose-blockquote:text-gray-400
-                [&>*]:mb-5 md:[&>*]:mb-6"
+                prose-li:text-base md:prose-li:text-lg
+                prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-600 dark:prose-blockquote:text-gray-400"
               dangerouslySetInnerHTML={{ __html: sanitizedContent }}
             />
           </div>

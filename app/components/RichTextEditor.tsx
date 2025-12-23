@@ -136,6 +136,82 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ onChange, value }) => {
   return (
     <div>
       <style jsx global>{`
+        /* Optimized Editor Typography - matching blog post view */
+        .ql-editor {
+          font-size: 17px !important;
+          line-height: 1.7 !important;
+          padding: 1.5rem !important;
+        }
+
+        .ql-editor p {
+          margin-bottom: 1em !important;
+          line-height: 1.7 !important;
+          font-size: 17px !important;
+        }
+
+        .ql-editor h1,
+        .ql-editor h2,
+        .ql-editor h3,
+        .ql-editor h4,
+        .ql-editor h5,
+        .ql-editor h6 {
+          margin-top: 1.5em !important;
+          margin-bottom: 0.6em !important;
+          font-weight: 700 !important;
+          line-height: 1.3 !important;
+        }
+
+        .ql-editor h1 { font-size: 2em !important; }
+        .ql-editor h2 { font-size: 1.625em !important; }
+        .ql-editor h3 { font-size: 1.375em !important; }
+        .ql-editor h4 { font-size: 1.25em !important; }
+        .ql-editor h5 { font-size: 1.125em !important; }
+        .ql-editor h6 { font-size: 1em !important; }
+
+        .ql-editor ul,
+        .ql-editor ol {
+          padding-left: 1.5em !important;
+          margin-bottom: 1em !important;
+        }
+
+        .ql-editor li {
+          margin-bottom: 0.3em !important;
+          line-height: 1.7 !important;
+          font-size: 17px !important;
+        }
+
+        .ql-editor blockquote {
+          margin: 1.25em 0 !important;
+          padding-left: 1em !important;
+          font-style: italic !important;
+          border-left: 4px solid #3b82f6 !important;
+        }
+
+        /* Code blocks in editor */
+        .ql-editor .ql-code-block-container {
+          margin: 1.25em 0 !important;
+          padding: 1.25em !important;
+          border-radius: 6px !important;
+          background: #1e293b !important;
+          font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace !important;
+        }
+
+        .ql-editor .ql-code-block {
+          font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace !important;
+          font-size: 15px !important;
+          color: #e2e8f0 !important;
+          line-height: 1.6 !important;
+        }
+
+        /* Inline code */
+        .ql-editor code {
+          font-size: 0.9em !important;
+          padding: 0.2em 0.4em !important;
+          background-color: rgba(150, 150, 150, 0.1) !important;
+          border-radius: 3px !important;
+          font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace !important;
+        }
+
         /* Make images in editor responsive */
         .ql-editor img {
           max-width: 100% !important;
@@ -166,8 +242,13 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ onChange, value }) => {
         .blot-formatter__overlay {
           z-index: 999 !important;
         }
+
+        /* Increase editor container height for better writing experience */
+        .ql-container {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+        }
       `}</style>
-      <div ref={quillRef} style={{ height: '600px' }}></div>
+      <div ref={quillRef} style={{ height: '700px' }}></div>
       <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
         💡 Tip: Click on an image to see resize handles and alignment toolbar above it. Drag corners to resize, click toolbar buttons to align. Supports JPG, PNG, GIF, WebP (max 5MB).
       </p>
