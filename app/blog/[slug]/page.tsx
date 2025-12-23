@@ -8,6 +8,9 @@ import { blogAPI } from '@/app/lib/api';
 import { Post } from '@/app/types/blog';
 import SocialShare from '@/app/components/blog/SocialShare';
 import RelatedPosts from '@/app/components/blog/RelatedPosts';
+import ReadingProgress from '@/app/components/blog/ReadingProgress';
+import BlogMetaTags from '@/app/components/blog/BlogMetaTags';
+import NewsletterSignup from '@/app/components/blog/NewsletterSignup';
 import 'quill/dist/quill.snow.css';
 import '@enzedonline/quill-blot-formatter2/dist/css/quill-blot-formatter2.css';
 
@@ -152,6 +155,12 @@ export default function SingleBlogPost() {
     return `${minutes} min read`;
   };
 
+  // Extract description from content (for meta tags)
+  const extractDescription = (content: string, maxLength: number = 160) => {
+    const text = content.replace(/<[^>]*>/g, '').trim();
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
@@ -179,8 +188,26 @@ export default function SingleBlogPost() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-6 md:py-12">
-      <style jsx global>{`
+    <>
+      {/* Reading Progress Bar */}
+      <ReadingProgress />
+
+      {/* Meta Tags for SEO and Social Sharing */}
+      {post && (
+        <BlogMetaTags
+          title={post.title}
+          description={post.excerpt || extractDescription(post.content)}
+          image={post.mainImageUrl}
+          url={typeof window !== 'undefined' ? window.location.href : `https://parathan.com/blog/${slug}`}
+          author={post.user ? `${post.user.firstname} ${post.user.lastname}` : 'Parathan'}
+          publishedTime={post.createdAt || post.createdOn}
+          modifiedTime={post.updatedAt}
+          tags={post.categories?.map((cat) => cat.title)}
+        />
+      )}
+
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-6 md:py-12">
+        <style jsx global>{`
         /* Make images responsive and clickable */
         .ql-editor img {
           max-width: 100% !important;
@@ -486,6 +513,9 @@ export default function SingleBlogPost() {
             />
           </div>
 
+          {/* Newsletter Signup */}
+          <NewsletterSignup />
+
           {/* Related Posts */}
           <RelatedPosts currentSlug={slug} />
 
@@ -544,6 +574,7 @@ export default function SingleBlogPost() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
