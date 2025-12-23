@@ -1,9 +1,12 @@
 import { MetadataRoute } from 'next';
-import { API_BASE_URL } from './lib/config';
 import { Post } from './types/blog';
 
 // Get the site URL from environment or use a default
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://yourdomain.com';
+
+// For sitemap generation, we need the full public URL (not relative /api)
+// This is used at build time when relative URLs don't work
+const API_URL = `${SITE_URL}/api`;
 
 interface Project {
   id: number;
@@ -79,7 +82,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fetch blog posts - add to sitemap if successful
   let blogPosts: MetadataRoute.Sitemap = [];
   try {
-    const postsResponse = await fetch(`${API_BASE_URL}/post`, {
+    const postsResponse = await fetch(`${API_URL}/post`, {
       next: { revalidate: 3600 }, // Revalidate every hour
     });
 
@@ -101,7 +104,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fetch projects - add to sitemap if successful
   let projectPages: MetadataRoute.Sitemap = [];
   try {
-    const projectsResponse = await fetch(`${API_BASE_URL}/portfolio/projects`, {
+    const projectsResponse = await fetch(`${API_URL}/portfolio/projects`, {
       next: { revalidate: 3600 },
     });
 
