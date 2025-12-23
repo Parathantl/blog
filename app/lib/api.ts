@@ -83,6 +83,12 @@ export const blogAPI = {
       credentials: 'include',
       body: JSON.stringify(data),
     });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Failed to create post' }));
+      throw error;
+    }
+
     return response.json();
   },
 
@@ -93,6 +99,12 @@ export const blogAPI = {
       credentials: 'include',
       body: JSON.stringify(data),
     });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Failed to update post' }));
+      throw error;
+    }
+
     return response.json();
   },
 
@@ -192,6 +204,12 @@ export const blogAPI = {
       credentials: 'include',
       body: JSON.stringify(data),
     });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Failed to create master category' }));
+      throw error;
+    }
+
     return response.json();
   },
 
@@ -202,6 +220,12 @@ export const blogAPI = {
       credentials: 'include',
       body: JSON.stringify(data),
     });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Failed to update master category' }));
+      throw error;
+    }
+
     return response.json();
   },
 
@@ -210,6 +234,12 @@ export const blogAPI = {
       method: 'DELETE',
       credentials: 'include',
     });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Failed to delete master category' }));
+      throw error;
+    }
+
     return response.json();
   },
 };

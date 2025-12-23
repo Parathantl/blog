@@ -19,6 +19,7 @@ export default function AdminSidebar() {
     { href: '/admin/experience', label: 'Experience', icon: '🏢' },
     { href: '/admin/about', label: 'About Info', icon: '👤' },
     { href: '/admin/posts', label: 'Blog Posts', icon: '📝' },
+    { href: '/admin/master-categories', label: 'Master Categories', icon: '🗂️' },
     { href: '/admin/categories', label: 'Categories', icon: '📂' },
     { href: '/admin/contact', label: 'Messages', icon: '✉️' },
   ];

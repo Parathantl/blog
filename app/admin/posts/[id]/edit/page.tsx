@@ -95,7 +95,9 @@ const EditPost: React.FC = () => {
       return;
     }
 
-    if (!content.trim()) {
+    // Check if content is empty (Quill might return HTML with just empty tags)
+    const strippedContent = content.replace(/<[^>]*>/g, '').trim();
+    if (!strippedContent) {
       toast.error('Please enter content');
       return;
     }
@@ -108,7 +110,7 @@ const EditPost: React.FC = () => {
     setSaving(true);
 
     try {
-      await blogAPI.updatePost(slug, {
+      const result = await blogAPI.updatePost(slug, {
         title,
         content,
         mainImageUrl: mainImageUrl || undefined,
@@ -119,7 +121,7 @@ const EditPost: React.FC = () => {
       router.push('/admin/posts');
     } catch (error: any) {
       console.error('Error updating post:', error);
-      toast.error(error?.response?.data?.message || 'Failed to update post');
+      toast.error(error?.message || 'Failed to update post');
     } finally {
       setSaving(false);
     }

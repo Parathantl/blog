@@ -48,7 +48,7 @@ export default function MasterCategoriesPage() {
       resetForm();
       fetchMasterCategories();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to save master category');
+      toast.error(error?.message || 'Failed to save master category');
       console.error(error);
     }
   };
@@ -74,7 +74,7 @@ export default function MasterCategoriesPage() {
       toast.success('Master category deleted successfully');
       fetchMasterCategories();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to delete master category');
+      toast.error(error?.message || 'Failed to delete master category');
       console.error(error);
     }
   };
