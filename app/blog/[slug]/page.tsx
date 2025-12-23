@@ -55,6 +55,61 @@ export default function SingleBlogPost() {
     return () => document.removeEventListener('click', handleImageClick);
   }, []);
 
+  // Add copy buttons to code blocks
+  useEffect(() => {
+    const addCopyButtons = () => {
+      const codeBlocks = document.querySelectorAll('.ql-editor .ql-code-block-container');
+
+      codeBlocks.forEach((block) => {
+        const codeElement = block as HTMLElement;
+
+        // Skip if button already exists
+        if (codeElement.querySelector('.copy-code-button')) return;
+
+        const button = document.createElement('button');
+        button.className = 'copy-code-button';
+        button.innerHTML = `
+          <svg class="copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          <span class="copy-text">Copy</span>
+        `;
+
+        button.addEventListener('click', async () => {
+          const code = codeElement.textContent || '';
+          try {
+            await navigator.clipboard.writeText(code);
+            button.innerHTML = `
+              <svg class="copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span class="copy-text">Copied!</span>
+            `;
+            setTimeout(() => {
+              button.innerHTML = `
+                <svg class="copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <span class="copy-text">Copy</span>
+              `;
+            }, 2000);
+          } catch (err) {
+            console.error('Failed to copy:', err);
+          }
+        });
+
+        codeElement.style.position = 'relative';
+        codeElement.appendChild(button);
+      });
+    };
+
+    // Add buttons after content loads
+    const timer = setTimeout(addCopyButtons, 100);
+    return () => clearTimeout(timer);
+  }, [sanitizedContent]);
+
   // Handle ESC key to close lightbox
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -139,6 +194,180 @@ export default function SingleBlogPost() {
             max-width: 100% !important;
           }
         }
+
+        /* Enhanced Typography for better readability */
+        .ql-editor {
+          font-size: 16px;
+          line-height: 1.75;
+        }
+
+        .ql-editor p {
+          margin-bottom: 1.5em;
+          line-height: 1.8;
+        }
+
+        .ql-editor h1,
+        .ql-editor h2,
+        .ql-editor h3,
+        .ql-editor h4,
+        .ql-editor h5,
+        .ql-editor h6 {
+          margin-top: 2em;
+          margin-bottom: 0.75em;
+          font-weight: 700;
+          line-height: 1.3;
+        }
+
+        .ql-editor h1 { font-size: 2em; }
+        .ql-editor h2 { font-size: 1.625em; }
+        .ql-editor h3 { font-size: 1.375em; }
+
+        .ql-editor ul,
+        .ql-editor ol {
+          padding-left: 1.5em;
+          margin-bottom: 1.5em;
+        }
+
+        .ql-editor li {
+          margin-bottom: 0.5em;
+          line-height: 1.75;
+        }
+
+        .ql-editor blockquote {
+          margin: 1.5em 0;
+          padding-left: 1em;
+          font-style: italic;
+        }
+
+        /* Inline code styling */
+        .ql-editor code {
+          font-size: 0.875em;
+          padding: 0.2em 0.5em;
+          border-radius: 4px;
+          background-color: rgba(150, 150, 150, 0.1);
+          border: 1px solid rgba(150, 150, 150, 0.2);
+          font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+          color: #e83e8c;
+        }
+
+        /* Dark mode inline code */
+        .dark .ql-editor code {
+          background-color: rgba(255, 255, 255, 0.1);
+          border-color: rgba(255, 255, 255, 0.2);
+          color: #ff6b9d;
+        }
+
+        /* Code block container styling - Quill uses div.ql-code-block-container */
+        .ql-editor .ql-code-block-container {
+          margin: 2em 0 !important;
+          padding: 1.5em !important;
+          border-radius: 8px !important;
+          overflow-x: auto !important;
+          background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+          position: relative !important;
+        }
+
+        .dark .ql-editor .ql-code-block-container {
+          background: linear-gradient(135deg, #0f172a 0%, #020617 100%) !important;
+          border-color: rgba(255, 255, 255, 0.15) !important;
+        }
+
+        /* Individual code lines - Quill uses div.ql-code-block for each line */
+        .ql-editor .ql-code-block {
+          font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
+          font-size: 0.9em !important;
+          color: #e2e8f0 !important;
+          line-height: 1.7 !important;
+          white-space: pre !important;
+          background: transparent !important;
+          border: none !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+
+        /* Copy button styling */
+        .copy-code-button {
+          position: absolute;
+          top: 0.75em;
+          right: 0.75em;
+          display: flex;
+          align-items: center;
+          gap: 0.4em;
+          padding: 0.4em 0.75em;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 6px;
+          color: #e2e8f0;
+          font-size: 0.75em;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          backdrop-filter: blur(8px);
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .copy-code-button:hover {
+          background: rgba(255, 255, 255, 0.2);
+          border-color: rgba(255, 255, 255, 0.3);
+          transform: translateY(-1px);
+        }
+
+        .copy-code-button:active {
+          transform: translateY(0);
+        }
+
+        .copy-code-button .copy-icon {
+          width: 14px;
+          height: 14px;
+          flex-shrink: 0;
+        }
+
+        .copy-code-button .copy-text {
+          font-weight: 500;
+        }
+
+        /* Scrollbar styling for code blocks */
+        .ql-editor pre::-webkit-scrollbar {
+          height: 8px;
+        }
+
+        .ql-editor pre::-webkit-scrollbar-track {
+          background: rgba(0, 0, 0, 0.2);
+          border-radius: 4px;
+        }
+
+        .ql-editor pre::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.3);
+          border-radius: 4px;
+        }
+
+        .ql-editor pre::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Responsive typography */
+        @media (min-width: 768px) {
+          .ql-editor {
+            font-size: 18px;
+            line-height: 1.8;
+          }
+
+          .ql-editor h1 { font-size: 2.25em; }
+          .ql-editor h2 { font-size: 1.875em; }
+          .ql-editor h3 { font-size: 1.5em; }
+        }
+
+        @media (min-width: 1024px) {
+          .ql-editor {
+            font-size: 19px;
+            line-height: 1.85;
+          }
+
+          .ql-editor h1 { font-size: 2.5em; }
+          .ql-editor h2 { font-size: 2em; }
+          .ql-editor h3 { font-size: 1.625em; }
+        }
       `}</style>
 
       <article className="container mx-auto px-4 md:px-6">
@@ -217,15 +446,19 @@ export default function SingleBlogPost() {
           {/* Article Content */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 md:p-8 lg:p-12">
             <div
-              className="ql-editor prose dark:prose-invert max-w-none prose-sm md:prose-lg
+              className="ql-editor prose dark:prose-invert max-w-none prose-base md:prose-lg lg:prose-xl
                 prose-headings:text-gray-900 dark:prose-headings:text-white
-                prose-p:text-gray-700 dark:prose-p:text-gray-300
-                prose-a:text-blue-600 dark:prose-a:text-blue-400
-                prose-strong:text-gray-900 dark:prose-strong:text-white
-                prose-code:text-gray-900 dark:prose-code:text-white
-                prose-pre:bg-gray-100 dark:prose-pre:bg-gray-900
+                prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-p:text-base md:prose-p:text-lg prose-p:leading-relaxed md:prose-p:leading-loose
+                prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-a:underline hover:prose-a:text-blue-700
+                prose-strong:text-gray-900 dark:prose-strong:text-white prose-strong:font-semibold
                 prose-img:rounded-lg prose-img:shadow-md prose-img:transition-transform prose-img:hover:scale-[1.02]
-                prose-headings:leading-tight prose-p:leading-relaxed"
+                prose-headings:leading-tight prose-headings:mb-4 prose-headings:mt-8
+                prose-h1:text-2xl md:prose-h1:text-3xl lg:prose-h1:text-4xl prose-h1:leading-snug
+                prose-h2:text-xl md:prose-h2:text-2xl lg:prose-h2:text-3xl prose-h2:leading-snug
+                prose-h3:text-lg md:prose-h3:text-xl lg:prose-h3:text-2xl prose-h3:leading-snug
+                prose-li:text-base md:prose-li:text-lg prose-li:leading-relaxed prose-li:my-2
+                prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-600 dark:prose-blockquote:text-gray-400
+                [&>*]:mb-5 md:[&>*]:mb-6"
               dangerouslySetInnerHTML={{ __html: sanitizedContent }}
             />
           </div>
