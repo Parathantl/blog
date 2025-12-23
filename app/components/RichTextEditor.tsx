@@ -1,11 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
-import ImageResize from 'quill-image-resize';
+import BlotFormatter from '@enzedonline/quill-blot-formatter2';
+import '@enzedonline/quill-blot-formatter2/dist/css/quill-blot-formatter2.css';
 import { API_BASE_URL } from '../lib/config';
 
-// Register the image resize module
-Quill.register('modules/imageResize', ImageResize);
+// Register the blot formatter module
+Quill.register('modules/blotFormatter', BlotFormatter);
 
 interface RichTextEditorProps {
   onChange: (content: string) => void;
@@ -70,6 +71,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ onChange, value }) => {
 
           if (url) {
             quillInstanceRef.current?.insertEmbed(range.index, 'image', url);
+            // Move cursor to next position after image
+            quillInstanceRef.current?.setSelection(range.index + 1, 0);
           }
         }
       }
@@ -101,9 +104,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ onChange, value }) => {
               image: handleImageUpload,
             },
           },
-          imageResize: {
-            displaySize: true,
-          },
+          blotFormatter: {},
         },
       });
 
@@ -134,9 +135,41 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ onChange, value }) => {
 
   return (
     <div>
+      <style jsx global>{`
+        /* Make images in editor responsive */
+        .ql-editor img {
+          max-width: 100% !important;
+          height: auto !important;
+        }
+
+        /* Enhance blot formatter toolbar visibility and UX */
+        .blot-formatter__toolbar {
+          z-index: 1000 !important;
+          background: white !important;
+          border: 1px solid #ccc !important;
+          border-radius: 4px !important;
+          padding: 4px !important;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+        }
+
+        .blot-formatter__toolbar-button {
+          cursor: pointer !important;
+          padding: 4px 8px !important;
+          border: none !important;
+          background: transparent !important;
+        }
+
+        .blot-formatter__toolbar-button:hover {
+          background: #f0f0f0 !important;
+        }
+
+        .blot-formatter__overlay {
+          z-index: 999 !important;
+        }
+      `}</style>
       <div ref={quillRef} style={{ height: '600px' }}></div>
       <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-        💡 Tip: You can drag corners to resize images after inserting them. Supports JPG, PNG, GIF, WebP (max 5MB).
+        💡 Tip: Click on an image to see resize handles and alignment toolbar above it. Drag corners to resize, click toolbar buttons to align. Supports JPG, PNG, GIF, WebP (max 5MB).
       </p>
     </div>
   );

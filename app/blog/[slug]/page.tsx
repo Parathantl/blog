@@ -6,6 +6,8 @@ import Link from 'next/link';
 import DOMPurify from 'dompurify';
 import { blogAPI } from '@/app/lib/api';
 import { Post } from '@/app/types/blog';
+import 'quill/dist/quill.snow.css';
+import '@enzedonline/quill-blot-formatter2/dist/css/quill-blot-formatter2.css';
 
 export default function SingleBlogPost() {
   const params = useParams();
@@ -121,21 +123,20 @@ export default function SingleBlogPost() {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-6 md:py-12">
-      <style jsx>{`
-        /* Fix Quill editor inline styles for responsive images */
-        .blog-content img {
+      <style jsx global>{`
+        /* Make images responsive and clickable */
+        .ql-editor img {
           max-width: 100% !important;
           height: auto !important;
           cursor: pointer !important;
-          display: block;
-          margin-left: auto;
-          margin-right: auto;
         }
 
-        /* Remove width attribute effect on mobile */
+        /* Mobile responsive - override fixed widths */
         @media (max-width: 768px) {
-          .blog-content img {
+          .ql-editor img,
+          .ql-editor [class^="ql-image-align-"] {
             width: 100% !important;
+            max-width: 100% !important;
           }
         }
       `}</style>
@@ -216,7 +217,7 @@ export default function SingleBlogPost() {
           {/* Article Content */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 md:p-8 lg:p-12">
             <div
-              className="blog-content prose dark:prose-invert max-w-none prose-sm md:prose-lg
+              className="ql-editor prose dark:prose-invert max-w-none prose-sm md:prose-lg
                 prose-headings:text-gray-900 dark:prose-headings:text-white
                 prose-p:text-gray-700 dark:prose-p:text-gray-300
                 prose-a:text-blue-600 dark:prose-a:text-blue-400
