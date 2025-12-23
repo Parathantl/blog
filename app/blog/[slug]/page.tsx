@@ -7,6 +7,7 @@ import DOMPurify from 'dompurify';
 import { blogAPI } from '@/app/lib/api';
 import { Post } from '@/app/types/blog';
 import SocialShare from '@/app/components/blog/SocialShare';
+import RelatedPosts from '@/app/components/blog/RelatedPosts';
 import 'quill/dist/quill.snow.css';
 import '@enzedonline/quill-blot-formatter2/dist/css/quill-blot-formatter2.css';
 
@@ -484,6 +485,9 @@ export default function SingleBlogPost() {
               dangerouslySetInnerHTML={{ __html: sanitizedContent }}
             />
           </div>
+
+          {/* Related Posts */}
+          <RelatedPosts currentSlug={slug} />
 
           {/* Footer */}
           <div className="mt-8 md:mt-12 text-center">
