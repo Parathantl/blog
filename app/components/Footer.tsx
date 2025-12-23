@@ -16,7 +16,7 @@ const Footer: React.FC = () => {
             {/* Social Links */}
             <div className="flex gap-4">
               <a
-                href="https://github.com/yourusername"
+                href="https://github.com/parathantl"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-white transition-colors"
@@ -27,7 +27,7 @@ const Footer: React.FC = () => {
                 </svg>
               </a>
               <a
-                href="https://linkedin.com/in/yourusername"
+                href="https://linkedin.com/in/parathantl"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-white transition-colors"
@@ -38,7 +38,7 @@ const Footer: React.FC = () => {
                 </svg>
               </a>
               <a
-                href="https://twitter.com/yourusername"
+                href="https://twitter.com/parathantl"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-white transition-colors"
