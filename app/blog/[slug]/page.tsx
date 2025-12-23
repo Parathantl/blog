@@ -6,6 +6,7 @@ import Link from 'next/link';
 import DOMPurify from 'dompurify';
 import { blogAPI } from '@/app/lib/api';
 import { Post } from '@/app/types/blog';
+import SocialShare from '@/app/components/blog/SocialShare';
 import 'quill/dist/quill.snow.css';
 import '@enzedonline/quill-blot-formatter2/dist/css/quill-blot-formatter2.css';
 
@@ -458,6 +459,12 @@ export default function SingleBlogPost() {
               />
             )}
           </header>
+
+          {/* Social Share */}
+          <SocialShare
+            url={typeof window !== 'undefined' ? window.location.href : `https://parathan.com/blog/${slug}`}
+            title={post.title}
+          />
 
           {/* Article Content */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 md:p-8 lg:p-12">
