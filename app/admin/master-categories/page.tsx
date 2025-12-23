@@ -37,11 +37,17 @@ export default function MasterCategoriesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Ensure numbers are properly formatted
+      const data = {
+        ...formData,
+        displayOrder: Number(formData.displayOrder),
+      };
+
       if (editingCategory) {
-        await blogAPI.updateMasterCategory(editingCategory.id, formData);
+        await blogAPI.updateMasterCategory(editingCategory.id, data);
         toast.success('Master category updated successfully');
       } else {
-        await blogAPI.createMasterCategory(formData);
+        await blogAPI.createMasterCategory(data);
         toast.success('Master category created successfully');
       }
       setShowModal(false);
@@ -92,9 +98,20 @@ export default function MasterCategoriesPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
+
+    // Parse value based on field type
+    let parsedValue: any;
+    if (type === 'checkbox') {
+      parsedValue = (e.target as HTMLInputElement).checked;
+    } else if (name === 'displayOrder') {
+      parsedValue = parseInt(value) || 1;
+    } else {
+      parsedValue = value;
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
+      [name]: parsedValue,
     }));
 
     // Auto-generate slug from name

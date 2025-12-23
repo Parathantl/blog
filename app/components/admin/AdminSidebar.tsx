@@ -22,6 +22,7 @@ export default function AdminSidebar() {
     { href: '/admin/master-categories', label: 'Master Categories', icon: '🗂️' },
     { href: '/admin/categories', label: 'Categories', icon: '📂' },
     { href: '/admin/contact', label: 'Messages', icon: '✉️' },
+    { href: '/admin/newsletter', label: 'Newsletter', icon: '📧' },
   ];
 
   const closeMobileMenu = () => setMobileMenuOpen(false);

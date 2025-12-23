@@ -1,11 +1,63 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
+interface MasterCategory {
+  id: number;
+  name: string;
+  slug: string;
+}
 
 const NewsletterSignup: React.FC = () => {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const [masterCategories, setMasterCategories] = useState<MasterCategory[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  // Fetch master categories on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        const response = await fetch(`${apiUrl}/master-categories`);
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch categories');
+        }
+
+        const data = await response.json();
+
+        // Validate that data is an array
+        if (Array.isArray(data) && data.length > 0) {
+          setMasterCategories(data);
+          // Pre-select all categories by default
+          setSelectedCategories(data.map((cat: MasterCategory) => cat.id));
+        } else {
+          console.warn('No categories returned or invalid data format');
+          setMasterCategories([]);
+          setSelectedCategories([]);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        setMasterCategories([]);
+        setSelectedCategories([]);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  const toggleCategory = (categoryId: number) => {
+    setSelectedCategories(prev =>
+      prev.includes(categoryId)
+        ? prev.filter(id => id !== categoryId)
+        : [...prev, categoryId]
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,28 +68,58 @@ const NewsletterSignup: React.FC = () => {
       return;
     }
 
+    // Only validate category selection if categories are available
+    if (masterCategories.length > 0 && selectedCategories.length === 0) {
+      setStatus('error');
+      setMessage('Please select at least one category');
+      return;
+    }
+
+    // If no categories loaded, show helpful error
+    if (masterCategories.length === 0) {
+      setStatus('error');
+      setMessage('Categories are unavailable. Please check your connection and try again.');
+      return;
+    }
+
     setStatus('loading');
 
     try {
-      // TODO: Replace with your actual newsletter API endpoint
-      // For now, just simulate success
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/newsletter/subscribe`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          masterCategoryIds: selectedCategories,
+        }),
+      });
 
-      // You can send this to your backend or a service like Mailchimp, ConvertKit, etc.
-      console.log('Newsletter signup:', email);
+      const data = await response.json();
 
-      setStatus('success');
-      setMessage('Thanks for subscribing! Check your inbox for confirmation.');
-      setEmail('');
+      if (response.ok && data.success) {
+        setStatus('success');
+        setMessage(
+          data.message ||
+            'Please check your email to verify your subscription. Link valid for 24 hours.',
+        );
+        setEmail('');
 
-      // Reset after 5 seconds
-      setTimeout(() => {
-        setStatus('idle');
-        setMessage('');
-      }, 5000);
+        // Reset after 10 seconds (longer for verification message)
+        setTimeout(() => {
+          setStatus('idle');
+          setMessage('');
+        }, 10000);
+      } else {
+        setStatus('error');
+        setMessage(data.message || 'Something went wrong. Please try again.');
+      }
     } catch (error) {
       setStatus('error');
       setMessage('Something went wrong. Please try again.');
+      console.error('Newsletter signup error:', error);
     }
   };
 
@@ -71,32 +153,98 @@ const NewsletterSignup: React.FC = () => {
 
         {/* Form */}
         {status !== 'success' ? (
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              className="flex-1 px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              disabled={status === 'loading'}
-            />
-            <button
-              type="submit"
-              disabled={status === 'loading'}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-lg transition-colors duration-200 whitespace-nowrap"
-            >
-              {status === 'loading' ? (
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Subscribing...
-                </span>
-              ) : (
-                'Subscribe'
-              )}
-            </button>
+          <form onSubmit={handleSubmit} className="max-w-md mx-auto">
+            {/* Loading Categories */}
+            {loadingCategories && (
+              <div className="mb-4 text-center">
+                <p className="text-sm text-gray-600 dark:text-gray-400">Loading categories...</p>
+              </div>
+            )}
+
+            {/* Category Selection */}
+            {!loadingCategories && masterCategories.length > 0 && (
+              <div className="mb-4">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 text-left">
+                  Subscribe to:
+                </p>
+                <div className="flex flex-wrap gap-3 justify-center">
+                  {masterCategories.map((category) => (
+                    <label
+                      key={category.id}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-full cursor-pointer transition-all ${
+                        selectedCategories.includes(category.id)
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedCategories.includes(category.id)}
+                        onChange={() => toggleCategory(category.id)}
+                        className="hidden"
+                      />
+                      <span className="font-medium">{category.name}</span>
+                      {selectedCategories.includes(category.id) && (
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      )}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* No Categories Warning */}
+            {!loadingCategories && masterCategories.length === 0 && (
+              <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900 border border-yellow-300 dark:border-yellow-700 rounded-lg">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200 text-center">
+                  ⚠️ Categories are currently unavailable. Please try again later or contact support.
+                </p>
+              </div>
+            )}
+
+            {/* Email Input */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="flex-1 px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                disabled={status === 'loading'}
+              />
+              <button
+                type="submit"
+                disabled={status === 'loading' || loadingCategories || (!loadingCategories && masterCategories.length > 0 && selectedCategories.length === 0)}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200 whitespace-nowrap"
+                title={
+                  loadingCategories
+                    ? 'Loading categories...'
+                    : (!loadingCategories && masterCategories.length > 0 && selectedCategories.length === 0)
+                    ? 'Please select at least one category'
+                    : 'Subscribe to newsletter'
+                }
+              >
+                {status === 'loading' ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Subscribing...
+                  </span>
+                ) : loadingCategories ? (
+                  'Loading...'
+                ) : (
+                  'Subscribe'
+                )}
+              </button>
+            </div>
           </form>
         ) : null}
 

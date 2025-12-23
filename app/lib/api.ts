@@ -160,6 +160,12 @@ export const blogAPI = {
       credentials: 'include',
       body: JSON.stringify(data),
     });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Failed to update category' }));
+      throw error;
+    }
+
     return response.json();
   },
 

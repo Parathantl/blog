@@ -143,6 +143,13 @@ export default function CategoriesManagement() {
     fetchMasterCategories();
   }, []);
 
+  // Refresh master categories when form is shown
+  useEffect(() => {
+    if (showAddForm) {
+      fetchMasterCategories();
+    }
+  }, [showAddForm]);
+
   const fetchCategories = async () => {
     try {
       const data = await blogAPI.getCategories();
@@ -155,10 +162,13 @@ export default function CategoriesManagement() {
     }
   };
 
-  const fetchMasterCategories = async () => {
+  const fetchMasterCategories = async (showToast = false) => {
     try {
       const data = await blogAPI.getMasterCategories();
       setMasterCategories(data);
+      if (showToast) {
+        toast.success('Master categories refreshed!');
+      }
     } catch (error) {
       console.error('Error fetching master categories:', error);
       toast.error('Failed to load master categories');
@@ -167,7 +177,13 @@ export default function CategoriesManagement() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+
+    // Convert number fields to actual numbers
+    const parsedValue = (name === 'masterCategoryId' || name === 'displayOrder')
+      ? parseInt(value) || 0
+      : value;
+
+    setFormData(prev => ({ ...prev, [name]: parsedValue }));
 
     // Auto-generate slug from title
     if (name === 'title') {
@@ -192,21 +208,25 @@ export default function CategoriesManagement() {
     e.preventDefault();
 
     try {
+      // Ensure numbers are properly formatted
       const data = {
         ...formData,
-        masterCategoryId: parseInt(formData.masterCategoryId.toString()),
-        displayOrder: parseInt(formData.displayOrder.toString()),
+        masterCategoryId: Number(formData.masterCategoryId),
+        displayOrder: Number(formData.displayOrder),
       };
 
+      console.log('Submitting category data:', data); // Debug log
+
       if (editingId) {
-        await blogAPI.updateCategory(editingId, data);
+        const result = await blogAPI.updateCategory(editingId, data);
+        console.log('Update result:', result); // Debug log
       } else {
         await blogAPI.createCategory(data);
       }
 
       toast.success(`Category ${editingId ? 'updated' : 'created'} successfully!`);
       resetForm();
-      fetchCategories();
+      await fetchCategories(); // Wait for categories to reload
     } catch (error) {
       console.error('Error saving category:', error);
       toast.error(`Failed to ${editingId ? 'update' : 'create'} category`);
@@ -321,9 +341,22 @@ export default function CategoriesManagement() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Master Category *
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Master Category *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => fetchMasterCategories(true)}
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1"
+                    title="Refresh master categories"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Refresh
+                  </button>
+                </div>
                 <select
                   name="masterCategoryId"
                   value={formData.masterCategoryId}
