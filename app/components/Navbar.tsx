@@ -181,9 +181,7 @@ const Navbar: React.FC = () => {
             </Link>
 
             {/* Auth Section */}
-            {loading ? (
-              <div className="w-20 h-10 bg-gray-700 animate-pulse rounded-lg"></div>
-            ) : user ? (
+            {!loading && user && (
               <div className="flex items-center space-x-4">
                 <span className="text-sm">
                   Hi, {user.firstname}
@@ -201,13 +199,6 @@ const Navbar: React.FC = () => {
                   Logout
                 </button>
               </div>
-            ) : (
-              <Link
-                href="/login"
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-              >
-                Login
-              </Link>
             )}
           </div>
 
@@ -350,9 +341,7 @@ const Navbar: React.FC = () => {
             </Link>
 
             {/* Mobile Auth Section */}
-            {loading ? (
-              <div className="h-10 bg-gray-700 animate-pulse rounded-lg"></div>
-            ) : user ? (
+            {!loading && user && (
               <div className="space-y-2">
                 <div className="py-2 text-gray-300">
                   Hi, {user.firstname}
@@ -374,14 +363,6 @@ const Navbar: React.FC = () => {
                   Logout
                 </button>
               </div>
-            ) : (
-              <Link
-                href="/login"
-                className="block py-2 px-4 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-center"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Login
-              </Link>
             )}
           </div>
         )}

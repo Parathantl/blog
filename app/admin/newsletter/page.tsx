@@ -49,10 +49,9 @@ export default function NewsletterAdmin() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
 
       // Fetch master categories
-      const categoriesRes = await fetch(`${API_BASE_URL}/master-category`);
+      const categoriesRes = await fetch(`${API_BASE_URL}/master-categories`);
       if (categoriesRes.ok) {
         const categoriesData = await categoriesRes.json();
         // Ensure it's an array
@@ -71,23 +70,20 @@ export default function NewsletterAdmin() {
 
       // Fetch subscriber stats (admin endpoint)
       const statsRes = await fetch(`${API_BASE_URL}/newsletter/stats`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: 'include',
       });
 
       if (statsRes.ok) {
         const statsData = await statsRes.json();
         setSubscriberStats(statsData);
       } else {
-        console.error('Failed to fetch subscriber stats');
+        const errorText = await statsRes.text();
+        console.error('Failed to fetch subscriber stats:', statsRes.status, errorText);
       }
 
       // Fetch all subscribers (admin endpoint)
       const subscribersRes = await fetch(`${API_BASE_URL}/newsletter/subscribers`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: 'include',
       });
 
       if (subscribersRes.ok) {
@@ -151,32 +147,6 @@ export default function NewsletterAdmin() {
 
     setFilteredSubscribers(filtered);
   }, [selectedCategory, searchQuery, subscribers]);
-
-  const handleUnsubscribe = async (email: string) => {
-    if (!confirm(`Are you sure you want to unsubscribe ${email}?`)) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/newsletter/unsubscribe`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      if (response.ok) {
-        toast.success('Subscriber removed successfully');
-        fetchData(); // Refresh data
-      } else {
-        toast.error('Failed to unsubscribe');
-      }
-    } catch (error) {
-      console.error('Error unsubscribing:', error);
-      toast.error('Failed to unsubscribe');
-    }
-  };
 
   const handleExportCSV = () => {
     const csvContent = [
@@ -368,15 +338,12 @@ export default function NewsletterAdmin() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Subscribed Date
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Actions
-                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {filteredSubscribers.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={3} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                     No subscribers found
                   </td>
                 </tr>
@@ -411,14 +378,6 @@ export default function NewsletterAdmin() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {formatDate(subscriber.subscribedAt)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => handleUnsubscribe(subscriber.email)}
-                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 transition-colors"
-                      >
-                        Unsubscribe
-                      </button>
                     </td>
                   </tr>
                 ))

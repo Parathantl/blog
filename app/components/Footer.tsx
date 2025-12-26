@@ -129,19 +129,6 @@ const Footer: React.FC = () => {
                   Contact Me
                 </Link>
               </li>
-              <li>
-                <a
-                  href="mailto:parathan@example.com"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  Email
-                </a>
-              </li>
-              <li>
-                <Link href="/login" className="text-gray-400 hover:text-white transition-colors">
-                  Admin Login
-                </Link>
-              </li>
             </ul>
           </div>
         </div>

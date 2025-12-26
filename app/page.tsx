@@ -116,26 +116,6 @@ export default function Home() {
             </p>
           </div>
           <BlogList limit={3} masterCategorySlug="tech" />
-          <div className="text-center mt-8 flex flex-col sm:flex-row justify-center gap-4">
-            <Link
-              href="/blog"
-              className="inline-block px-8 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold transition-colors"
-            >
-              All Posts
-            </Link>
-            <Link
-              href="/blog/tech"
-              className="inline-block px-8 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors"
-            >
-              Tech Blog
-            </Link>
-            <Link
-              href="/blog/tamil"
-              className="inline-block px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors"
-            >
-              தமிழ் Blog
-            </Link>
-          </div>
         </div>
       </section>
 

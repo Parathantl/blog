@@ -38,7 +38,7 @@ export default function ContactPage() {
                       <p className="font-semibold text-gray-900 dark:text-white">
                         Email
                       </p>
-                      <p>parathan@example.com</p>
+                      <p>parathan98@gmail.com</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -47,7 +47,7 @@ export default function ContactPage() {
                       <p className="font-semibold text-gray-900 dark:text-white">
                         Location
                       </p>
-                      <p>Your City, Country</p>
+                      <p>Jaffna, Sri Lanka</p>
                     </div>
                   </div>
                 </div>

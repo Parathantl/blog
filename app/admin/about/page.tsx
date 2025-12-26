@@ -232,7 +232,7 @@ export default function AboutEditor() {
                   value={formData.phone}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="+1 (555) 123-4567"
+                  placeholder="+94 (77) 989-8497"
                 />
               </div>
 
@@ -247,7 +247,7 @@ export default function AboutEditor() {
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="San Francisco, CA, USA"
+                  placeholder="Jaffna, Sri Lanka"
                 />
               </div>
             </div>
