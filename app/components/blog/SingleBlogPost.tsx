@@ -524,7 +524,11 @@ export default function SingleBlogPost({ slug }: SingleBlogPostProps) {
           </div>
 
           {/* Newsletter Signup */}
-          <NewsletterSignup />
+          <NewsletterSignup
+            currentMasterCategorySlug={
+              post.categories?.[0]?.masterCategory?.slug
+            }
+          />
 
           {/* Related Posts */}
           <RelatedPosts currentSlug={slug} />

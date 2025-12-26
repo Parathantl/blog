@@ -34,6 +34,12 @@ export default function NewsletterAdmin() {
     total: 0,
     byCategory: {} as Record<string, number>,
   });
+  const [subscriberStats, setSubscriberStats] = useState({
+    totalSignups: 0,
+    activeSubscribers: 0,
+    unsubscribedCount: 0,
+    unverifiedCount: 0,
+  });
 
   // Fetch master categories and subscribers
   useEffect(() => {
@@ -61,6 +67,20 @@ export default function NewsletterAdmin() {
         console.error('Failed to fetch categories');
         setMasterCategories([]);
         toast.error('Failed to fetch categories');
+      }
+
+      // Fetch subscriber stats (admin endpoint)
+      const statsRes = await fetch(`${API_BASE_URL}/newsletter/stats`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        setSubscriberStats(statsData);
+      } else {
+        console.error('Failed to fetch subscriber stats');
       }
 
       // Fetch all subscribers (admin endpoint)
@@ -208,42 +228,84 @@ export default function NewsletterAdmin() {
         </p>
       </div>
 
-      {/* Statistics Cards */}
+      {/* Statistics Cards - Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Total Subscribers */}
+        {/* Active Subscribers */}
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium opacity-90">Total Subscribers</h3>
+            <h3 className="text-sm font-medium opacity-90">Active Subscribers</h3>
+            <svg className="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p className="text-4xl font-bold">{subscriberStats.activeSubscribers}</p>
+          <p className="text-xs opacity-75 mt-2">Verified & subscribed</p>
+        </div>
+
+        {/* Total Signups */}
+        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-medium opacity-90">Total Signups</h3>
             <svg className="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
           </div>
-          <p className="text-4xl font-bold">{stats.total}</p>
+          <p className="text-4xl font-bold">{subscriberStats.totalSignups}</p>
+          <p className="text-xs opacity-75 mt-2">All time signups</p>
         </div>
 
-        {/* Category Stats */}
-        {Array.isArray(masterCategories) && masterCategories.map((category, index) => {
-          const colors = [
-            'from-purple-500 to-purple-600',
-            'from-green-500 to-green-600',
-            'from-orange-500 to-orange-600',
-          ];
-          return (
-            <div
-              key={category.id}
-              className={`bg-gradient-to-br ${colors[index % colors.length]} rounded-lg shadow-lg p-6 text-white`}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium opacity-90">{category.name} Subscribers</h3>
-                <svg className="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                </svg>
-              </div>
-              <p className="text-4xl font-bold">{stats.byCategory[category.name] || 0}</p>
-            </div>
-          );
-        })}
+        {/* Unsubscribed */}
+        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-lg p-6 text-white">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-medium opacity-90">Unsubscribed</h3>
+            <svg className="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6" />
+            </svg>
+          </div>
+          <p className="text-4xl font-bold">{subscriberStats.unsubscribedCount}</p>
+          <p className="text-xs opacity-75 mt-2">Opted out</p>
+        </div>
+
+        {/* Unverified */}
+        <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg shadow-lg p-6 text-white">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-medium opacity-90">Pending Verification</h3>
+            <svg className="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p className="text-4xl font-bold">{subscriberStats.unverifiedCount}</p>
+          <p className="text-xs opacity-75 mt-2">Awaiting email verification</p>
+        </div>
       </div>
+
+      {/* Category Statistics */}
+      {Array.isArray(masterCategories) && masterCategories.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {masterCategories.map((category, index) => {
+            const colors = [
+              'from-green-500 to-green-600',
+              'from-indigo-500 to-indigo-600',
+              'from-pink-500 to-pink-600',
+            ];
+            return (
+              <div
+                key={category.id}
+                className={`bg-gradient-to-br ${colors[index % colors.length]} rounded-lg shadow-lg p-6 text-white`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-medium opacity-90">{category.name}</h3>
+                  <svg className="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
+                </div>
+                <p className="text-4xl font-bold">{stats.byCategory[category.name] || 0}</p>
+                <p className="text-xs opacity-75 mt-2">Active subscribers</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Filters and Actions */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">

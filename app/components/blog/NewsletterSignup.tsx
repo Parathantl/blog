@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 interface MasterCategory {
   id: number;
@@ -8,13 +9,18 @@ interface MasterCategory {
   slug: string;
 }
 
-const NewsletterSignup: React.FC = () => {
+interface NewsletterSignupProps {
+  currentMasterCategorySlug?: string; // Current post's master category
+}
+
+const NewsletterSignup: React.FC<NewsletterSignupProps> = ({ currentMasterCategorySlug }) => {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const [masterCategories, setMasterCategories] = useState<MasterCategory[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
+  const [showAllCategories, setShowAllCategories] = useState(false);
 
   // Fetch master categories on mount
   useEffect(() => {
@@ -32,8 +38,21 @@ const NewsletterSignup: React.FC = () => {
         // Validate that data is an array
         if (Array.isArray(data) && data.length > 0) {
           setMasterCategories(data);
-          // Pre-select all categories by default
-          setSelectedCategories(data.map((cat: MasterCategory) => cat.id));
+
+          // Auto-select based on context
+          if (currentMasterCategorySlug) {
+            // Find and select only the current category
+            const currentCategory = data.find((cat: MasterCategory) => cat.slug === currentMasterCategorySlug);
+            if (currentCategory) {
+              setSelectedCategories([currentCategory.id]);
+            } else {
+              // Fallback: select all if current category not found
+              setSelectedCategories(data.map((cat: MasterCategory) => cat.id));
+            }
+          } else {
+            // No context - select all categories by default
+            setSelectedCategories(data.map((cat: MasterCategory) => cat.id));
+          }
         } else {
           console.warn('No categories returned or invalid data format');
           setMasterCategories([]);
@@ -49,7 +68,7 @@ const NewsletterSignup: React.FC = () => {
     };
 
     fetchCategories();
-  }, []);
+  }, [currentMasterCategorySlug]);
 
   const toggleCategory = (categoryId: number) => {
     setSelectedCategories(prev =>
@@ -145,7 +164,9 @@ const NewsletterSignup: React.FC = () => {
 
         {/* Heading */}
         <h3 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-3">
-          Stay Updated
+          {currentMasterCategorySlug
+            ? `Subscribe to ${masterCategories.find(cat => cat.slug === currentMasterCategorySlug)?.name || ''} Updates`
+            : 'Stay Updated'}
         </h3>
         <p className="text-gray-600 dark:text-gray-400 mb-6">
           Get the latest posts delivered right to your inbox. No spam, unsubscribe anytime.
@@ -164,38 +185,75 @@ const NewsletterSignup: React.FC = () => {
             {/* Category Selection */}
             {!loadingCategories && masterCategories.length > 0 && (
               <div className="mb-4">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 text-left">
-                  Subscribe to:
-                </p>
-                <div className="flex flex-wrap gap-3 justify-center">
-                  {masterCategories.map((category) => (
-                    <label
-                      key={category.id}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-full cursor-pointer transition-all ${
-                        selectedCategories.includes(category.id)
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                      }`}
+                {currentMasterCategorySlug && !showAllCategories ? (
+                  /* Context-aware: Show only current category with option to expand */
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      Subscribing to:{' '}
+                      <span className="font-semibold text-blue-600 dark:text-blue-400">
+                        {masterCategories.find(cat => cat.slug === currentMasterCategorySlug)?.name}
+                      </span>
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowAllCategories(true)}
+                      className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
                     >
-                      <input
-                        type="checkbox"
-                        checked={selectedCategories.includes(category.id)}
-                        onChange={() => toggleCategory(category.id)}
-                        className="hidden"
-                      />
-                      <span className="font-medium">{category.name}</span>
-                      {selectedCategories.includes(category.id) && (
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path
-                            fillRule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
+                      + Subscribe to other categories too
+                    </button>
+                  </div>
+                ) : (
+                  /* Show all categories */
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 text-left">
+                      Subscribe to:
+                    </p>
+                    <div className="flex flex-wrap gap-3 justify-center">
+                      {masterCategories.map((category) => (
+                        <label
+                          key={category.id}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-full cursor-pointer transition-all ${
+                            selectedCategories.includes(category.id)
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedCategories.includes(category.id)}
+                            onChange={() => toggleCategory(category.id)}
+                            className="hidden"
                           />
-                        </svg>
-                      )}
-                    </label>
-                  ))}
-                </div>
+                          <span className="font-medium">{category.name}</span>
+                          {selectedCategories.includes(category.id) && (
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path
+                                fillRule="evenodd"
+                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          )}
+                        </label>
+                      ))}
+                    </div>
+                    {currentMasterCategorySlug && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAllCategories(false);
+                          const currentCategory = masterCategories.find(cat => cat.slug === currentMasterCategorySlug);
+                          if (currentCategory) {
+                            setSelectedCategories([currentCategory.id]);
+                          }
+                        }}
+                        className="text-xs text-gray-600 dark:text-gray-400 hover:underline mt-2"
+                      >
+                        ← Just {masterCategories.find(cat => cat.slug === currentMasterCategorySlug)?.name}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 

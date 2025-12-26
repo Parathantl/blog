@@ -1,37 +1,40 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useEffect, useState, useRef } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-function VerifyContent() {
-  const searchParams = useSearchParams();
+export default function VerifyNewsletterPage() {
+  const params = useParams();
   const router = useRouter();
+  const token = params.token as string;
+
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
-  const [categories, setCategories] = useState<string[]>([]);
+  const hasVerified = useRef(false); // Prevent double verification
 
   useEffect(() => {
-    const token = searchParams.get('token');
-
     if (!token) {
       setStatus('error');
       setMessage('Invalid verification link. No token provided.');
       return;
     }
 
+    // Prevent double verification in React StrictMode (development)
+    if (hasVerified.current) {
+      return;
+    }
+    hasVerified.current = true;
+
     const verifyEmail = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-        const response = await fetch(`${apiUrl}/newsletter/verify?token=${token}`);
+        const response = await fetch(`${apiUrl}/newsletter/verify/${token}`);
         const data = await response.json();
 
         if (response.ok && data.success) {
           setStatus('success');
           setMessage(data.message);
-          if (data.subscriber?.categories) {
-            setCategories(data.subscriber.categories);
-          }
 
           // Redirect to home after 5 seconds
           setTimeout(() => {
@@ -49,7 +52,7 @@ function VerifyContent() {
     };
 
     verifyEmail();
-  }, [searchParams, router]);
+  }, [token, router]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
@@ -106,29 +109,16 @@ function VerifyContent() {
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mb-4">{message}</p>
 
-            {categories.length > 0 && (
-              <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 mb-6">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  You&apos;re subscribed to:
-                </p>
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {categories.map((category, index) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1 bg-blue-600 text-white rounded-full text-sm font-medium"
-                    >
-                      {category}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+            <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 mb-6">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                ✓ You&apos;re all set!
+              </p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Check your inbox for a welcome email with more details.
+              </p>
+            </div>
 
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Check your inbox for a welcome email!
-            </p>
-
-            <p className="text-sm text-gray-500 dark:text-gray-400">
               Redirecting to home page in 5 seconds...
             </p>
 
@@ -179,49 +169,5 @@ function VerifyContent() {
         )}
       </div>
     </div>
-  );
-}
-
-export default function VerifyNewsletterPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8">
-            <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full mb-4">
-                <svg
-                  className="animate-spin h-8 w-8 text-blue-600 dark:text-blue-400"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                Loading...
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                Please wait while we load the verification page...
-              </p>
-            </div>
-          </div>
-        </div>
-      }
-    >
-      <VerifyContent />
-    </Suspense>
   );
 }
