@@ -1,7 +1,30 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { blogAPI } from '../lib/api';
+import { MasterCategory } from '../types/blog';
 
 const Footer: React.FC = () => {
+  const [masterCategories, setMasterCategories] = useState<MasterCategory[]>([]);
+
+  useEffect(() => {
+    const fetchMasterCategories = async () => {
+      try {
+        const categories = await blogAPI.getMasterCategories();
+        // Filter active categories and sort by displayOrder
+        const activeCategories = categories
+          .filter((cat: MasterCategory) => cat.isActive)
+          .sort((a: MasterCategory, b: MasterCategory) => a.displayOrder - b.displayOrder);
+        setMasterCategories(activeCategories);
+      } catch (error) {
+        console.error('Error fetching master categories:', error);
+      }
+    };
+
+    fetchMasterCategories();
+  }, []);
+
   return (
     <footer className="bg-gray-800 text-white">
       <div className="container mx-auto px-6 py-12">
@@ -87,21 +110,13 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="font-bold text-lg mb-4">Blog</h3>
             <ul className="space-y-2">
-              <li>
-                <Link href="/blog" className="text-gray-400 hover:text-white transition-colors">
-                  All Posts
-                </Link>
-              </li>
-              <li>
-                <Link href="/blog/tech" className="text-gray-400 hover:text-white transition-colors">
-                  Tech Blog
-                </Link>
-              </li>
-              <li>
-                <Link href="/blog/tamil" className="text-gray-400 hover:text-white transition-colors">
-                  தமிழ் Blog
-                </Link>
-              </li>
+              {masterCategories.map((category) => (
+                <li key={category.id}>
+                  <Link href={`/blog/${category.slug}`} className="text-gray-400 hover:text-white transition-colors">
+                    {category.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 

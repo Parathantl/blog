@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import BlogList from '../components/blog/BlogList';
 
 export default function BlogPage() {
@@ -8,37 +7,15 @@ export default function BlogPage() {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-            Blog
+            Tech Blog
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
-            Technical insights, Tamil content, and more
+          <p className="text-lg text-gray-600 dark:text-gray-400">
+            Technical insights and tutorials
           </p>
-
-          {/* Quick Links to Specific Blogs */}
-          <div className="flex justify-center gap-4 flex-wrap">
-            <Link
-              href="/blog"
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-            >
-              All Posts
-            </Link>
-            <Link
-              href="/blog/tech"
-              className="px-6 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors"
-            >
-              Tech Blog
-            </Link>
-            <Link
-              href="/blog/tamil"
-              className="px-6 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors"
-            >
-              தமிழ் Blog
-            </Link>
-          </div>
         </div>
 
-        {/* Blog List with Filters */}
-        <BlogList />
+        {/* Blog List */}
+        <BlogList masterCategorySlug="tech" />
       </div>
     </div>
   );

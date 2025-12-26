@@ -37,8 +37,11 @@ export default function BlogList({ masterCategorySlug, limit }: BlogListProps) {
         const categoriesData = await blogAPI.getCategories();
         setCategories(categoriesData);
 
+        // Ensure postsData is an array
+        const postsArray = Array.isArray(postsData) ? postsData : [];
+
         // Apply limit if specified
-        const postsToShow = limit ? postsData.slice(0, limit) : postsData;
+        const postsToShow = limit ? postsArray.slice(0, limit) : postsArray;
 
         setPosts(postsToShow);
         setFilteredPosts(postsToShow);

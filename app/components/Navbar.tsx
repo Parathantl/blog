@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { API_BASE_URL } from '../lib/config';
+import { blogAPI } from '../lib/api';
+import { MasterCategory } from '../types/blog';
 
 interface User {
   id: number;
@@ -20,11 +22,26 @@ const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [masterCategories, setMasterCategories] = useState<MasterCategory[]>([]);
   const router = useRouter();
 
   useEffect(() => {
     checkAuthStatus();
+    fetchMasterCategories();
   }, []);
+
+  const fetchMasterCategories = async () => {
+    try {
+      const categories = await blogAPI.getMasterCategories();
+      // Filter active categories and sort by displayOrder
+      const activeCategories = categories
+        .filter((cat: MasterCategory) => cat.isActive)
+        .sort((a: MasterCategory, b: MasterCategory) => a.displayOrder - b.displayOrder);
+      setMasterCategories(activeCategories);
+    } catch (error) {
+      console.error('Error fetching master categories:', error);
+    }
+  };
 
   const checkAuthStatus = async () => {
     try {
@@ -144,27 +161,16 @@ const Navbar: React.FC = () => {
               {blogOpen && (
                 <div className="absolute top-full left-0 pt-2 z-50">
                   <div className="w-48 bg-gray-700 rounded-lg shadow-xl py-2">
-                    <Link
-                      href="/blog"
-                      className="block px-4 py-2 hover:bg-gray-600 transition-colors"
-                      onClick={() => setBlogOpen(false)}
-                    >
-                      All Posts
-                    </Link>
-                    <Link
-                      href="/blog/tech"
-                      className="block px-4 py-2 hover:bg-gray-600 transition-colors"
-                      onClick={() => setBlogOpen(false)}
-                    >
-                      Tech Blog
-                    </Link>
-                    <Link
-                      href="/blog/tamil"
-                      className="block px-4 py-2 hover:bg-gray-600 transition-colors"
-                      onClick={() => setBlogOpen(false)}
-                    >
-                      தமிழ் Blog
-                    </Link>
+                    {masterCategories.map((category) => (
+                      <Link
+                        key={category.id}
+                        href={`/blog/${category.slug}`}
+                        className="block px-4 py-2 hover:bg-gray-600 transition-colors"
+                        onClick={() => setBlogOpen(false)}
+                      >
+                        {category.name}
+                      </Link>
+                    ))}
                   </div>
                 </div>
               )}
@@ -321,27 +327,16 @@ const Navbar: React.FC = () => {
               </button>
               {blogOpen && (
                 <div className="pl-4 space-y-2">
-                  <Link
-                    href="/blog"
-                    className="block py-2 text-gray-300 hover:text-blue-400"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    All Posts
-                  </Link>
-                  <Link
-                    href="/blog/tech"
-                    className="block py-2 text-gray-300 hover:text-blue-400"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Tech Blog
-                  </Link>
-                  <Link
-                    href="/blog/tamil"
-                    className="block py-2 text-gray-300 hover:text-blue-400"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    தமிழ் Blog
-                  </Link>
+                  {masterCategories.map((category) => (
+                    <Link
+                      key={category.id}
+                      href={`/blog/${category.slug}`}
+                      className="block py-2 text-gray-300 hover:text-blue-400"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {category.name}
+                    </Link>
+                  ))}
                 </div>
               )}
             </div>
