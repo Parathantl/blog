@@ -8,44 +8,27 @@ import { Post } from '@/app/types/blog';
 import SocialShare from '@/app/components/blog/SocialShare';
 import RelatedPosts from '@/app/components/blog/RelatedPosts';
 import ReadingProgress from '@/app/components/blog/ReadingProgress';
-import BlogMetaTags from '@/app/components/blog/BlogMetaTags';
+
 import NewsletterSignup from '@/app/components/blog/NewsletterSignup';
 import 'quill/dist/quill.snow.css';
 import '@enzedonline/quill-blot-formatter2/dist/css/quill-blot-formatter2.css';
 
 interface SingleBlogPostProps {
   slug: string;
+  post: Post;
 }
 
-export default function SingleBlogPost({ slug }: SingleBlogPostProps) {
-  const [post, setPost] = useState<Post | null>(null);
+export default function SingleBlogPost({ slug, post }: SingleBlogPostProps) {
   const [sanitizedContent, setSanitizedContent] = useState<string>('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchPost = async () => {
-      try {
-        setLoading(true);
-        const data = await blogAPI.getPostBySlug(slug);
-        setPost(data);
-
-        // Sanitize content
-        const clean = DOMPurify.sanitize(data.content);
-        setSanitizedContent(clean);
-      } catch (err) {
-        setError('Failed to load blog post');
-        console.error('Error fetching post:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (slug) {
-      fetchPost();
+    if (post && post.content) {
+      // Sanitize content
+      const clean = DOMPurify.sanitize(post.content);
+      setSanitizedContent(clean);
     }
-  }, [slug]);
+  }, [post]);
 
   // Add click handlers to images for lightbox
   useEffect(() => {
@@ -156,56 +139,10 @@ export default function SingleBlogPost({ slug }: SingleBlogPostProps) {
     return `${minutes} min read`;
   };
 
-  // Extract description from content (for meta tags)
-  const extractDescription = (content: string, maxLength: number = 160) => {
-    const text = content.replace(/<[^>]*>/g, '').trim();
-    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
-        <p className="text-gray-600 dark:text-gray-400">Loading...</p>
-      </div>
-    );
-  }
-
-  if (error || !post) {
-    return (
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 dark:text-red-400 mb-4">
-            {error || 'Post not found'}
-          </p>
-          <Link
-            href="/blog"
-            className="text-blue-600 dark:text-blue-400 hover:underline"
-          >
-            ← Back to Blog
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
       {/* Reading Progress Bar */}
       <ReadingProgress />
-
-      {/* Meta Tags for SEO and Social Sharing */}
-      {post && (
-        <BlogMetaTags
-          title={post.title}
-          description={post.excerpt || extractDescription(post.content)}
-          image={post.mainImageUrl}
-          url={typeof window !== 'undefined' ? window.location.href : `https://parathan.com/blog/${slug}`}
-          author={post.user ? `${post.user.firstname} ${post.user.lastname}` : 'Parathan'}
-          publishedTime={post.createdAt || post.createdOn}
-          modifiedTime={post.updatedAt}
-          tags={post.categories?.map((cat) => cat.title)}
-        />
-      )}
 
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-6 md:py-12">
         <style jsx global>{`
