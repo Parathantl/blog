@@ -109,17 +109,24 @@ export default async function DynamicBlogPage({ params }: PageParams) {
   }
 
   // AEO/GEO: Prepare JSON-LD Structured Data
-  let jsonLd = null;
+  let jsonLd: any = null;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://parathan.com';
 
   if (type === 'post') {
     const post = data as Post;
     const textContent = post.content?.replace(/<[^>]*>/g, '') || '';
     const description = post.excerpt || textContent.substring(0, 160) + '...';
-    
+
+    // Smart Type Detection
+    const isHowTo = post.title.toLowerCase().startsWith('how to');
+    const isFAQ = post.title.toLowerCase().includes('faq') || 
+                  post.categories?.some(c => c.title.toLowerCase().includes('faq')) ||
+                  post.content.includes('Frequently Asked Questions');
+
+    // Base Schema
     jsonLd = {
       '@context': 'https://schema.org',
-      '@type': 'BlogPosting',
+      '@type': isHowTo ? 'TechArticle' : 'BlogPosting', // Use TechArticle for guides (Safe "HowTo" alternative without strict steps)
       headline: post.title,
       description: description,
       image: post.mainImageUrl ? [post.mainImageUrl] : [],
@@ -128,14 +135,14 @@ export default async function DynamicBlogPage({ params }: PageParams) {
       author: {
         '@type': 'Person',
         name: post.user ? `${post.user.firstname} ${post.user.lastname}` : 'Parathan Thiyagalingam',
-        url: `${siteUrl}/portfolio/about`, // Linking author to authority page (GEO)
+        url: `${siteUrl}/portfolio/about`,
       },
       publisher: {
         '@type': 'Organization',
         name: 'Parathan Thiyagalingam',
         logo: {
           '@type': 'ImageObject',
-          url: `${siteUrl}/logo.png`, // Update if exists
+          url: `${siteUrl}/logo.png`,
         },
       },
       mainEntityOfPage: {
@@ -143,6 +150,21 @@ export default async function DynamicBlogPage({ params }: PageParams) {
         '@id': `${siteUrl}/blog/${params.slug}`,
       },
     };
+
+    // If it's a "How To", we add proficiency level to help GEOs
+    if (isHowTo) {
+      jsonLd.proficiencyLevel = "Beginner";
+    }
+
+    // If it's an FAQ, we explicitly explicitly mark it as FAQPage (Mixed Type)
+    // Note: Valid FAQPage requires mainEntity array of Questions. 
+    // Without parsing the HTML for questions, simply tagging it FAQPage can trigger warnings.
+    // We will stick to 'genre': 'FAQ' to be safe from penalties while signalling intent.
+    if (isFAQ) {
+      jsonLd.genre = 'FAQ';
+      jsonLd.alternativeHeadline = 'Frequently Asked Questions';
+    }
+
   } else if (type === 'category') {
     const category = data as MasterCategory;
     jsonLd = {
