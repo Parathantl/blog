@@ -57,7 +57,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: disallowPaths,
       },
     ],
-    sitemap: `${SITE_URL}/sitemap.xml`,
+    sitemap: [`${SITE_URL}/sitemap.xml`, `${SITE_URL}/feed.xml`],
     host: SITE_URL,
   };
 }

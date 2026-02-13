@@ -1,13 +1,14 @@
 'use client';
 
-import { MasterCategory } from '@/app/types/blog';
+import { MasterCategory, Post } from '@/app/types/blog';
 import BlogList from './BlogList';
 
 interface MasterCategoryPageProps {
   masterCategory: MasterCategory;
+  initialPosts?: Post[];
 }
 
-export default function MasterCategoryPage({ masterCategory }: MasterCategoryPageProps) {
+export default function MasterCategoryPage({ masterCategory, initialPosts }: MasterCategoryPageProps) {
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-12">
       <div className="container mx-auto px-6">
@@ -24,7 +25,7 @@ export default function MasterCategoryPage({ masterCategory }: MasterCategoryPag
         </div>
 
         {/* Blog Posts */}
-        <BlogList masterCategorySlug={masterCategory.slug} />
+        <BlogList masterCategorySlug={masterCategory.slug} initialPosts={initialPosts} />
       </div>
     </div>
   );

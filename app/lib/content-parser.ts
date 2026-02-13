@@ -128,14 +128,22 @@ export function extractHowToSteps(
 ): Array<{ name: string; text: string }> {
   const steps: Array<{ name: string; text: string }> = [];
 
-  // Only Pattern: Explicit "Step N:" headings with body content
-  const stepHeadingPattern =
-    /<h[2-4][^>]*>\s*(?:step\s*\d+[:.]\s*)(.*?)<\/h[2-4]>\s*([\s\S]*?)(?=<h[2-4]|$)/gi;
+  // Match any h2-h4 heading followed by body content
+  const headingPattern =
+    /<h[2-4][^>]*>([\s\S]*?)<\/h[2-4]>\s*([\s\S]*?)(?=<h[2-4]|$)/gi;
 
   let stepMatch;
-  while ((stepMatch = stepHeadingPattern.exec(html)) !== null) {
-    const name = stripHTML(stepMatch[1]);
+  while ((stepMatch = headingPattern.exec(html)) !== null) {
+    const headingHTML = stepMatch[1];
     const bodyHTML = stepMatch[2];
+
+    // Strip inner HTML tags to get plain heading text, then check for "Step N:" pattern
+    const headingText = stripHTML(headingHTML).trim();
+    const stepPattern = /^step\s*\d+[:.]\s*(.*)/i;
+    const stepNameMatch = headingText.match(stepPattern);
+    if (!stepNameMatch) continue;
+
+    const name = stepNameMatch[1].trim();
 
     // Extract text from paragraphs and list items
     const contentParts: string[] = [];

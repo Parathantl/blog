@@ -278,6 +278,17 @@ export default async function DynamicBlogPage({ params }: PageParams) {
   if (type === 'category') {
     const category = data as MasterCategory;
 
+    // Server-fetch posts for this category so they appear in initial HTML
+    let categoryPosts: Post[] = [];
+    try {
+      categoryPosts = await serverFetch<Post[]>(
+        `/post?masterCategory=${params.slug}`,
+        { revalidate: 3600 }
+      );
+    } catch {
+      // Will fall back to client-side fetch
+    }
+
     const categorySchema = getCollectionPageSchema(
       `${category.name} Blog`,
       category.description || `Articles about ${category.name}`,
@@ -301,7 +312,7 @@ export default async function DynamicBlogPage({ params }: PageParams) {
             dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
           />
         ))}
-        <MasterCategoryPage masterCategory={category} />
+        <MasterCategoryPage masterCategory={category} initialPosts={categoryPosts} />
       </>
     );
   }

@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import ProjectsList from '../components/portfolio/ProjectsList';
 import SkillsSection from '../components/portfolio/SkillsSection';
+import { serverFetch } from '@/app/lib/server-api';
 import { getBreadcrumbSchema, getProfilePageSchema, SITE_URL } from '../lib/structured-data';
 
 export const dynamic = 'force-dynamic';
@@ -19,7 +20,50 @@ export const metadata: Metadata = {
   },
 };
 
-export default function PortfolioPage() {
+interface Project {
+  id: number;
+  title: string;
+  description: string;
+  longDescription: string;
+  technologies: string[];
+  imageUrl?: string;
+  projectUrl?: string;
+  githubUrl?: string;
+  featured: boolean;
+}
+
+interface Skill {
+  id: number;
+  name: string;
+  category: string;
+  proficiencyLevel: number;
+  iconUrl?: string;
+  displayOrder: number;
+  isVisible: boolean;
+}
+
+async function getFeaturedProjects(): Promise<Project[]> {
+  try {
+    return await serverFetch<Project[]>('/portfolio/projects/featured', { revalidate: 3600 });
+  } catch {
+    return [];
+  }
+}
+
+async function getSkills(): Promise<Skill[]> {
+  try {
+    return await serverFetch<Skill[]>('/portfolio/skills', { revalidate: 3600 });
+  } catch {
+    return [];
+  }
+}
+
+export default async function PortfolioPage() {
+  const [featuredProjects, skills] = await Promise.all([
+    getFeaturedProjects(),
+    getSkills(),
+  ]);
+
   const breadcrumb = getBreadcrumbSchema([
     { name: 'Home', url: SITE_URL },
     { name: 'Portfolio', url: `${SITE_URL}/portfolio` },
@@ -111,7 +155,7 @@ export default function PortfolioPage() {
               View All →
             </Link>
           </div>
-          <ProjectsList featured={true} limit={3} />
+          <ProjectsList featured={true} limit={3} initialData={featuredProjects} />
         </section>
 
         {/* Skills Preview */}
@@ -127,7 +171,7 @@ export default function PortfolioPage() {
               View All →
             </Link>
           </div>
-          <SkillsSection />
+          <SkillsSection initialData={skills} />
         </section>
 
         {/* CTA */}

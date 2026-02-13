@@ -47,13 +47,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   } catch { /* ignore */ }
 
   // Fetch master categories dynamically for blog category pages
+  // Also fetch posts to determine which categories actually have content
   let masterCategoryPages: MetadataRoute.Sitemap = [];
   try {
-    const mcRes = await fetch(`${API_URL}/master-categories`, { cache: 'no-store' });
+    const [mcRes, postsRes] = await Promise.all([
+      fetch(`${API_URL}/master-categories`, { cache: 'no-store' }),
+      fetch(`${API_URL}/post`, { cache: 'no-store' }),
+    ]);
     if (mcRes.ok) {
       const masterCategories: MasterCategoryEntry[] = await mcRes.json();
+      // Build set of master category slugs that have at least one post
+      let categorySlugsWithPosts = new Set<string>();
+      if (postsRes.ok) {
+        const posts: Post[] = await postsRes.json();
+        for (const post of posts) {
+          for (const cat of (post.categories || [])) {
+            if (cat.masterCategory?.slug) {
+              categorySlugsWithPosts.add(cat.masterCategory.slug);
+            }
+          }
+        }
+      }
       masterCategoryPages = masterCategories
-        .filter((mc) => mc.isActive)
+        .filter((mc) => mc.isActive && categorySlugsWithPosts.has(mc.slug))
         .map((mc) => ({
           url: `${SITE_URL}/blog/${mc.slug}`,
           lastModified: mc.updatedAt ? new Date(mc.updatedAt) : new Date(),

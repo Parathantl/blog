@@ -3,6 +3,9 @@ import Link from 'next/link';
 import { serverFetch } from '@/app/lib/server-api';
 import { getBreadcrumbSchema, getPersonSchema, SITE_URL } from '@/app/lib/structured-data';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
+
 interface AboutData {
   fullName: string;
   tagline: string;

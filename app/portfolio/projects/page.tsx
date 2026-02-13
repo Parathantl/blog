@@ -7,6 +7,12 @@ interface Project {
   id: number;
   title: string;
   description: string;
+  longDescription: string;
+  technologies: string[];
+  imageUrl?: string;
+  projectUrl?: string;
+  githubUrl?: string;
+  featured: boolean;
 }
 
 export const dynamic = 'force-dynamic';
@@ -75,7 +81,7 @@ export default async function ProjectsPage() {
             </p>
           </div>
 
-          <ProjectsList />
+          <ProjectsList initialData={projects} />
         </div>
       </div>
     </>

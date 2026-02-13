@@ -9,17 +9,19 @@ interface BlogListProps {
   masterCategorySlug?: string; // 'tech', 'tamil', or undefined for all
   limit?: number;
   initialPosts?: Post[];
+  initialCategories?: Category[];
 }
 
-export default function BlogList({ masterCategorySlug, limit, initialPosts }: BlogListProps) {
+export default function BlogList({ masterCategorySlug, limit, initialPosts, initialCategories }: BlogListProps) {
   const hasInitialPosts = initialPosts && initialPosts.length > 0;
+  const hasInitialCategories = initialCategories && initialCategories.length > 0;
   const [posts, setPosts] = useState<Post[]>(hasInitialPosts ? initialPosts : []);
   const [filteredPosts, setFilteredPosts] = useState<Post[]>(hasInitialPosts ? initialPosts : []);
   const [loading, setLoading] = useState(!hasInitialPosts);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>(hasInitialCategories ? initialCategories : []);
 
   useEffect(() => {
     if (initialPosts && initialPosts.length > 0) return; // Skip fetch only if server provided actual data
@@ -37,9 +39,11 @@ export default function BlogList({ masterCategorySlug, limit, initialPosts }: Bl
         // Fetch posts with master category filter
         const postsData = await blogAPI.getPosts(queryParams);
 
-        // Fetch categories
-        const categoriesData = await blogAPI.getCategories();
-        setCategories(categoriesData);
+        // Fetch categories (skip if server already provided them)
+        if (!hasInitialCategories) {
+          const categoriesData = await blogAPI.getCategories();
+          setCategories(categoriesData);
+        }
 
         // Ensure postsData is an array
         const postsArray = Array.isArray(postsData) ? postsData : [];
@@ -58,7 +62,7 @@ export default function BlogList({ masterCategorySlug, limit, initialPosts }: Bl
     };
 
     fetchData();
-  }, [masterCategorySlug, limit, initialPosts]);
+  }, [masterCategorySlug, limit, initialPosts, hasInitialCategories]);
 
   // Handle search and category filter
   useEffect(() => {
