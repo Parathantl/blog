@@ -35,20 +35,18 @@ export function wordCountToISO8601(wordCount: number): string {
 
 /**
  * Extract FAQ question/answer pairs from HTML content.
- * Looks for patterns like:
- * - <h2>Question?</h2><p>Answer text</p>
- * - <h3>Question?</h3><p>Answer text</p>
- * - <strong>Q: Question?</strong> Answer text
  *
- * Only returns pairs where the heading ends with '?' or starts with common FAQ patterns.
+ * Strict quality rules:
+ * - Questions MUST end with '?' (no exceptions — "What is X" without ? is a heading, not a question)
+ * - Answers must be at least 50 characters (short answers aren't useful FAQ entries)
+ * - Also extracts list content (<ul><li>, <ol><li>) following a question heading
  */
 export function extractFAQFromHTML(
   html: string
 ): Array<{ question: string; answer: string }> {
   const pairs: Array<{ question: string; answer: string }> = [];
 
-  // Pattern 1: Heading followed by paragraph(s)
-  // Match h2/h3/h4 headings that look like questions
+  // Pattern 1: Heading followed by content (paragraphs + lists)
   const headingPattern =
     /<h[2-4][^>]*>(.*?)<\/h[2-4]>\s*([\s\S]*?)(?=<h[2-4]|$)/gi;
 
@@ -57,35 +55,43 @@ export function extractFAQFromHTML(
     const headingText = stripHTML(match[1]);
     const bodyHTML = match[2];
 
-    // Check if it looks like a question
-    const isQuestion =
-      headingText.endsWith('?') ||
-      /^(what|how|why|when|where|who|which|can|do|does|is|are|will|should)/i.test(
-        headingText
-      );
+    // STRICT: Only accept headings that end with '?'
+    if (!headingText.endsWith('?')) continue;
+    if (!bodyHTML) continue;
 
-    if (isQuestion && bodyHTML) {
-      // Extract text from paragraphs following the heading
-      const paragraphs: string[] = [];
-      const pPattern = /<p[^>]*>(.*?)<\/p>/gi;
-      let pMatch;
-      while ((pMatch = pPattern.exec(bodyHTML)) !== null) {
-        const text = stripHTML(pMatch[1]);
-        if (text) paragraphs.push(text);
-      }
+    // Extract text from paragraphs AND list items
+    const contentParts: string[] = [];
 
-      // If no <p> tags, try to get any text content
-      if (paragraphs.length === 0) {
-        const bodyText = stripHTML(bodyHTML);
-        if (bodyText) paragraphs.push(bodyText);
-      }
+    // Get paragraphs
+    const pPattern = /<p[^>]*>(.*?)<\/p>/gi;
+    let pMatch;
+    while ((pMatch = pPattern.exec(bodyHTML)) !== null) {
+      const text = stripHTML(pMatch[1]);
+      if (text) contentParts.push(text);
+    }
 
-      if (paragraphs.length > 0) {
-        pairs.push({
-          question: headingText,
-          answer: paragraphs.join(' '),
-        });
-      }
+    // Get list items (these often contain the actual answer content)
+    const liPattern = /<li[^>]*>([\s\S]*?)<\/li>/gi;
+    let liMatch;
+    while ((liMatch = liPattern.exec(bodyHTML)) !== null) {
+      const text = stripHTML(liMatch[1]);
+      if (text) contentParts.push(text);
+    }
+
+    // Fallback: get any text content if no p/li tags
+    if (contentParts.length === 0) {
+      const bodyText = stripHTML(bodyHTML);
+      if (bodyText) contentParts.push(bodyText);
+    }
+
+    const answer = contentParts.join(' ').trim();
+
+    // STRICT: Answer must be substantial (at least 50 chars)
+    if (answer.length >= 50) {
+      pairs.push({
+        question: headingText,
+        answer: answer,
+      });
     }
   }
 
@@ -98,7 +104,7 @@ export function extractFAQFromHTML(
       const question = stripHTML(match[1]);
       const answer = stripHTML(match[2]);
 
-      if (question && answer) {
+      if (question && answer && answer.length >= 50) {
         pairs.push({ question, answer });
       }
     }
@@ -109,51 +115,52 @@ export function extractFAQFromHTML(
 
 /**
  * Extract how-to steps from HTML content.
- * Looks for:
- * - Ordered list items (<ol><li>)
- * - Numbered headings (Step 1:, 1., etc.)
- * - H2/H3 headings with step-like content
+ *
+ * Strict quality rules:
+ * - Only extracts from "Step N:" headings (explicit instructional content)
+ * - Does NOT extract from generic <ol><li> lists (too many false positives —
+ *   lists of features, requirements, or concepts are not "steps")
+ * - Each step must have a name AND substantive body text (at least 30 chars)
+ * - Name and text must be different (identical name/text = low quality)
  */
 export function extractHowToSteps(
   html: string
 ): Array<{ name: string; text: string }> {
   const steps: Array<{ name: string; text: string }> = [];
 
-  // Pattern 1: Ordered list items
-  const olPattern = /<ol[^>]*>([\s\S]*?)<\/ol>/gi;
-  let olMatch;
-  while ((olMatch = olPattern.exec(html)) !== null) {
-    const olContent = olMatch[1];
+  // Only Pattern: Explicit "Step N:" headings with body content
+  const stepHeadingPattern =
+    /<h[2-4][^>]*>\s*(?:step\s*\d+[:.]\s*)(.*?)<\/h[2-4]>\s*([\s\S]*?)(?=<h[2-4]|$)/gi;
+
+  let stepMatch;
+  while ((stepMatch = stepHeadingPattern.exec(html)) !== null) {
+    const name = stripHTML(stepMatch[1]);
+    const bodyHTML = stepMatch[2];
+
+    // Extract text from paragraphs and list items
+    const contentParts: string[] = [];
+    const pPattern = /<p[^>]*>(.*?)<\/p>/gi;
+    let pMatch;
+    while ((pMatch = pPattern.exec(bodyHTML)) !== null) {
+      const text = stripHTML(pMatch[1]);
+      if (text) contentParts.push(text);
+    }
     const liPattern = /<li[^>]*>([\s\S]*?)<\/li>/gi;
     let liMatch;
-    while ((liMatch = liPattern.exec(olContent)) !== null) {
+    while ((liMatch = liPattern.exec(bodyHTML)) !== null) {
       const text = stripHTML(liMatch[1]);
-      if (text) {
-        // Use first sentence as name, full text as text
-        const firstSentence = text.split(/[.!?]/)[0].trim();
-        steps.push({
-          name: firstSentence || text.substring(0, 100),
-          text: text,
-        });
-      }
+      if (text) contentParts.push(text);
     }
-  }
+    if (contentParts.length === 0) {
+      const bodyText = stripHTML(bodyHTML);
+      if (bodyText) contentParts.push(bodyText);
+    }
 
-  // Pattern 2: Step headings (Step 1: ..., 1. ...)
-  if (steps.length < 2) {
-    steps.length = 0; // Reset if we try this pattern
-    const stepHeadingPattern =
-      /<h[2-4][^>]*>\s*(?:step\s*\d+[:.]\s*|^\d+[.)]\s*)(.*?)<\/h[2-4]>\s*([\s\S]*?)(?=<h[2-4]|$)/gi;
+    const text = contentParts.join(' ').trim().substring(0, 500);
 
-    let stepMatch;
-    while ((stepMatch = stepHeadingPattern.exec(html)) !== null) {
-      const name = stripHTML(stepMatch[1]);
-      const bodyHTML = stepMatch[2];
-      const text = stripHTML(bodyHTML).substring(0, 500);
-
-      if (name && text) {
-        steps.push({ name, text });
-      }
+    // STRICT: Name must exist, text must be substantial, and they must differ
+    if (name && text && text.length >= 30 && text !== name) {
+      steps.push({ name, text });
     }
   }
 
