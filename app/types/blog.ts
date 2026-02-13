@@ -47,7 +47,8 @@ export interface Post {
   categories: Category[];
   createdAt: string;
   updatedAt: string;
-  createdOn?: string; // Legacy field name
+  createdOn?: string; // Actual DB column name
+  modifiedOn?: string; // Actual DB column name
 }
 
 // DTOs for creating/updating

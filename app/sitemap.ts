@@ -1,29 +1,18 @@
 import { MetadataRoute } from 'next';
 import { Post } from './types/blog';
 
-// Force dynamic generation - sitemap should be generated on request, not at build time
 export const dynamic = 'force-dynamic';
-export const revalidate = 3600; // Revalidate every hour
+export const revalidate = 3600;
 
-// Get the site URL from environment or use a default
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://yourdomain.com';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://parathan.com';
 
-// For server-side API calls (sitemap generation):
-// - In Docker: Use internal Docker network URL (http://backend:3001)
-// - In development: Use localhost
-// - Fallback: Use public API endpoint
 const getApiUrl = () => {
-  // Docker internal network (preferred for server-side calls in production)
   if (process.env.INTERNAL_API_URL) {
     return process.env.INTERNAL_API_URL;
   }
-
-  // Development
   if (process.env.NODE_ENV === 'development') {
     return 'http://localhost:3001';
   }
-
-  // Fallback to public URL
   return `${SITE_URL}/api`;
 };
 
@@ -35,8 +24,45 @@ interface Project {
   createdAt?: string;
 }
 
+interface About {
+  updatedAt?: string;
+}
+
+interface MasterCategoryEntry {
+  id: number;
+  slug: string;
+  isActive: boolean;
+  updatedAt?: string;
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // Static pages - always included
+  // Fetch timestamps for more accurate lastModified
+  let aboutUpdated: Date = new Date('2024-01-01');
+  try {
+    const aboutRes = await fetch(`${API_URL}/portfolio/about`, { cache: 'no-store' });
+    if (aboutRes.ok) {
+      const about: About = await aboutRes.json();
+      if (about.updatedAt) aboutUpdated = new Date(about.updatedAt);
+    }
+  } catch { /* ignore */ }
+
+  // Fetch master categories dynamically for blog category pages
+  let masterCategoryPages: MetadataRoute.Sitemap = [];
+  try {
+    const mcRes = await fetch(`${API_URL}/master-categories`, { cache: 'no-store' });
+    if (mcRes.ok) {
+      const masterCategories: MasterCategoryEntry[] = await mcRes.json();
+      masterCategoryPages = masterCategories
+        .filter((mc) => mc.isActive)
+        .map((mc) => ({
+          url: `${SITE_URL}/blog/${mc.slug}`,
+          lastModified: mc.updatedAt ? new Date(mc.updatedAt) : new Date(),
+          changeFrequency: 'daily' as const,
+          priority: 0.8,
+        }));
+    }
+  } catch { /* ignore */ }
+
   const staticPages: MetadataRoute.Sitemap = [
     {
       url: SITE_URL,
@@ -50,27 +76,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'daily' as const,
       priority: 0.9,
     },
-    {
-      url: `${SITE_URL}/blog/tech`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.8,
-    },
-    {
-      url: `${SITE_URL}/blog/tamil`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.8,
-    },
+    ...masterCategoryPages,
     {
       url: `${SITE_URL}/portfolio`,
-      lastModified: new Date(),
+      lastModified: aboutUpdated,
       changeFrequency: 'weekly' as const,
       priority: 0.9,
     },
     {
       url: `${SITE_URL}/portfolio/about`,
-      lastModified: new Date(),
+      lastModified: aboutUpdated,
       changeFrequency: 'monthly' as const,
       priority: 0.7,
     },
@@ -82,30 +97,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     {
       url: `${SITE_URL}/portfolio/skills`,
-      lastModified: new Date(),
+      lastModified: aboutUpdated,
       changeFrequency: 'monthly' as const,
       priority: 0.7,
     },
     {
       url: `${SITE_URL}/portfolio/experience`,
-      lastModified: new Date(),
+      lastModified: aboutUpdated,
       changeFrequency: 'monthly' as const,
       priority: 0.7,
     },
     {
       url: `${SITE_URL}/contact`,
-      lastModified: new Date(),
+      lastModified: new Date('2024-01-01'),
       changeFrequency: 'yearly' as const,
       priority: 0.5,
     },
   ];
 
-  // Fetch blog posts - add to sitemap if successful
+  // Fetch blog posts
   let blogPosts: MetadataRoute.Sitemap = [];
   try {
     console.log(`[Sitemap] Fetching blog posts from: ${API_URL}/post`);
     const postsResponse = await fetch(`${API_URL}/post`, {
-      cache: 'no-store', // Ensure we get fresh data
+      cache: 'no-store',
     });
 
     if (postsResponse.ok) {
@@ -124,12 +139,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('[Sitemap] Error fetching blog posts:', error);
   }
 
-  // Fetch projects - add to sitemap if successful
+  // Fetch projects
   let projectPages: MetadataRoute.Sitemap = [];
   try {
     console.log(`[Sitemap] Fetching projects from: ${API_URL}/portfolio/projects`);
     const projectsResponse = await fetch(`${API_URL}/portfolio/projects`, {
-      cache: 'no-store', // Ensure we get fresh data
+      cache: 'no-store',
     });
 
     if (projectsResponse.ok) {

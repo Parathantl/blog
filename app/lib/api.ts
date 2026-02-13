@@ -127,6 +127,22 @@ export const blogAPI = {
     return response.json();
   },
 
+  generateExcerpt: async (title: string, content: string) => {
+    const response = await fetch(`${API_BASE_URL}/post/generate-excerpt`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ title, content }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Failed to generate excerpt' }));
+      throw error;
+    }
+
+    return response.json();
+  },
+
   // Categories
   getCategories: async () => {
     const response = await fetch(`${API_BASE_URL}/category`);

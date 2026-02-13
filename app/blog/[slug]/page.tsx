@@ -1,67 +1,83 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { blogAPI } from '@/app/lib/api';
+import DOMPurify from 'isomorphic-dompurify';
 import { MasterCategory, Post } from '@/app/types/blog';
 import MasterCategoryPage from '@/app/components/blog/MasterCategoryPage';
-import SingleBlogPost from '@/app/components/blog/SingleBlogPost';
+import BlogPostContent from '@/app/components/blog/BlogPostContent';
+import { serverFetch } from '@/app/lib/server-api';
+import {
+  getBlogPostingSchema,
+  getTechArticleSchema,
+  getFAQPageSchema,
+  getHowToSchema,
+  getBreadcrumbSchema,
+  getCollectionPageSchema,
+  SITE_URL,
+} from '@/app/lib/structured-data';
+import {
+  extractFAQFromHTML,
+  extractHowToSteps,
+  calculateWordCount,
+  wordCountToISO8601,
+} from '@/app/lib/content-parser';
 
-// Define the params interface
 interface PageParams {
   params: {
     slug: string;
   };
 }
 
-// Helper to fetch data (Category or Post)
 async function getPageData(slug: string): Promise<{
   type: 'category' | 'post' | null;
   data: MasterCategory | Post | null;
 }> {
   try {
-    // 1. Try to fetch as Master Category
-    const category = await blogAPI.getMasterCategoryBySlug(slug);
+    const category = await serverFetch<MasterCategory>(
+      `/master-categories/slug/${slug}`,
+      { revalidate: 3600 }
+    );
     if (category && category.isActive) {
       return { type: 'category', data: category };
     }
   } catch (error) {
-    // Ignore error and try next
+    // Not a category, try post
   }
 
   try {
-    // 2. Try to fetch as Blog Post
-    const post = await blogAPI.getPostBySlug(slug);
+    const post = await serverFetch<Post>(`/post/slug/${slug}`, {
+      revalidate: 3600,
+      tags: [`post-${slug}`],
+    });
     if (post) {
       return { type: 'post', data: post };
     }
   } catch (error) {
-    // Ignore error
+    // Not found
   }
 
   return { type: null, data: null };
 }
 
-// Generate Metadata for SEO
 export async function generateMetadata({ params }: PageParams): Promise<Metadata> {
   const { type, data } = await getPageData(params.slug);
 
   if (!type || !data) {
-    return {
-      title: 'Page Not Found',
-    };
+    return { title: 'Page Not Found' };
   }
-
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://parathan.com';
-  const url = `${siteUrl}/blog/${params.slug}`;
 
   if (type === 'category') {
     const category = data as MasterCategory;
     return {
-      title: `${category.name} Blog | Parathan's Blog`,
-      description: category.description || `Read articles about ${category.name} by Parathan Thiyagalingam.`,
+      title: `${category.name} Blog`,
+      description:
+        category.description ||
+        `Read articles about ${category.name} by Parathan Thiyagalingam.`,
+      alternates: { canonical: `/blog/${params.slug}` },
       openGraph: {
-        title: `${category.name} Blog | Parathan's Blog`,
-        description: category.description || `Read articles about ${category.name}.`,
-        url,
+        title: `${category.name} Blog`,
+        description:
+          category.description || `Read articles about ${category.name}.`,
+        url: `${SITE_URL}/blog/${params.slug}`,
         type: 'website',
       },
     };
@@ -69,29 +85,40 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
 
   if (type === 'post') {
     const post = data as Post;
-    // Strip HTML from content for description
     const textContent = post.content?.replace(/<[^>]*>/g, '') || '';
-    const description = post.excerpt || textContent.substring(0, 160) + '...';
-    
+    const description =
+      post.excerpt || textContent.substring(0, 160) + '...';
+
     return {
       title: post.title,
-      description: description,
-      authors: [{ name: post.user ? `${post.user.firstname} ${post.user.lastname}` : 'Parathan Thiyagalingam' }],
+      description,
+      alternates: { canonical: `/blog/${params.slug}` },
+      authors: [
+        {
+          name: post.user
+            ? `${post.user.firstname} ${post.user.lastname}`
+            : 'Parathan Thiyagalingam',
+        },
+      ],
       openGraph: {
         title: post.title,
-        description: description,
-        url,
+        description,
+        url: `${SITE_URL}/blog/${params.slug}`,
         type: 'article',
         publishedTime: post.createdAt?.toString(),
         modifiedTime: post.updatedAt?.toString(),
         images: post.mainImageUrl ? [post.mainImageUrl] : [],
-        authors: [post.user ? `${post.user.firstname} ${post.user.lastname}` : 'Parathan Thiyagalingam'],
-        tags: post.categories?.map(c => c.title),
+        authors: [
+          post.user
+            ? `${post.user.firstname} ${post.user.lastname}`
+            : 'Parathan Thiyagalingam',
+        ],
+        tags: post.categories?.map((c) => c.title),
       },
       twitter: {
         card: 'summary_large_image',
         title: post.title,
-        description: description,
+        description,
         images: post.mainImageUrl ? [post.mainImageUrl] : [],
       },
     };
@@ -100,7 +127,25 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
   return {};
 }
 
-// Main Page Component
+export async function generateStaticParams() {
+  try {
+    const posts = await serverFetch<Post[]>('/post', { revalidate: 3600 });
+    const masterCategories = await serverFetch<MasterCategory[]>(
+      '/master-categories',
+      { revalidate: 3600 }
+    );
+
+    const postParams = posts.map((post) => ({ slug: post.slug }));
+    const categoryParams = masterCategories
+      .filter((mc) => mc.isActive)
+      .map((mc) => ({ slug: mc.slug }));
+
+    return [...postParams, ...categoryParams];
+  } catch {
+    return [];
+  }
+}
+
 export default async function DynamicBlogPage({ params }: PageParams) {
   const { type, data } = await getPageData(params.slug);
 
@@ -108,90 +153,120 @@ export default async function DynamicBlogPage({ params }: PageParams) {
     notFound();
   }
 
-  // AEO/GEO: Prepare JSON-LD Structured Data
-  let jsonLd: any = null;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://parathan.com';
+  const jsonLdBlocks: object[] = [];
 
   if (type === 'post') {
     const post = data as Post;
+
+    // Server-side content sanitization - content will be in initial HTML
+    const sanitizedContent = DOMPurify.sanitize(post.content || '');
+
+    // Calculate content metrics
+    const wordCount = calculateWordCount(post.content || '');
+    const timeRequired = wordCountToISO8601(wordCount);
     const textContent = post.content?.replace(/<[^>]*>/g, '') || '';
-    const description = post.excerpt || textContent.substring(0, 160) + '...';
+    const abstract =
+      post.excerpt || textContent.substring(0, 300) + '...';
 
-    // Smart Type Detection
-    const isHowTo = post.title.toLowerCase().startsWith('how to');
-    const isFAQ = post.title.toLowerCase().includes('faq') || 
-                  post.categories?.some(c => c.title.toLowerCase().includes('faq')) ||
-                  post.content.includes('Frequently Asked Questions');
+    // Content-driven schema detection: extract from actual content, not hardcoded title checks
+    const faqPairs = extractFAQFromHTML(post.content || '');
+    const howToSteps = extractHowToSteps(post.content || '');
 
-    // Base Schema
-    jsonLd = {
-      '@context': 'https://schema.org',
-      '@type': isHowTo ? 'TechArticle' : 'BlogPosting', // Use TechArticle for guides (Safe "HowTo" alternative without strict steps)
-      headline: post.title,
-      description: description,
-      image: post.mainImageUrl ? [post.mainImageUrl] : [],
-      datePublished: post.createdAt,
-      dateModified: post.updatedAt || post.createdAt,
-      author: {
-        '@type': 'Person',
-        name: post.user ? `${post.user.firstname} ${post.user.lastname}` : 'Parathan Thiyagalingam',
-        url: `${siteUrl}/portfolio/about`,
-      },
-      publisher: {
-        '@type': 'Organization',
-        name: 'Parathan Thiyagalingam',
-        logo: {
-          '@type': 'ImageObject',
-          url: `${siteUrl}/logo.png`,
-        },
-      },
-      mainEntityOfPage: {
-        '@type': 'WebPage',
-        '@id': `${siteUrl}/blog/${params.slug}`,
-      },
-    };
+    // Use TechArticle if how-to steps were found, otherwise BlogPosting
+    const hasFAQ = faqPairs.length >= 2;
+    const hasHowTo = howToSteps.length >= 2;
 
-    // If it's a "How To", we add proficiency level to help GEOs
-    if (isHowTo) {
-      jsonLd.proficiencyLevel = "Beginner";
+    const articleSchema = hasHowTo
+      ? getTechArticleSchema(post, { wordCount, timeRequired, abstract })
+      : getBlogPostingSchema(post, { wordCount, timeRequired, abstract });
+    jsonLdBlocks.push(articleSchema);
+
+    // FAQ schema - emitted if 2+ Q&A pairs found in content (any language, any category)
+    if (hasFAQ) {
+      const faqSchema = getFAQPageSchema(faqPairs);
+      if (faqSchema) {
+        jsonLdBlocks.push(faqSchema);
+      }
     }
 
-    // If it's an FAQ, we explicitly explicitly mark it as FAQPage (Mixed Type)
-    // Note: Valid FAQPage requires mainEntity array of Questions. 
-    // Without parsing the HTML for questions, simply tagging it FAQPage can trigger warnings.
-    // We will stick to 'genre': 'FAQ' to be safe from penalties while signalling intent.
-    if (isFAQ) {
-      jsonLd.genre = 'FAQ';
-      jsonLd.alternativeHeadline = 'Frequently Asked Questions';
+    // HowTo schema - emitted if 2+ steps found in content (any language, any category)
+    if (hasHowTo) {
+      const howToSchema = getHowToSchema(
+        post.title,
+        abstract,
+        howToSteps,
+        {
+          totalTime: timeRequired,
+          image: post.mainImageUrl,
+        }
+      );
+      if (howToSchema) {
+        jsonLdBlocks.push(howToSchema);
+      }
     }
 
-  } else if (type === 'category') {
-    const category = data as MasterCategory;
-    jsonLd = {
-      '@context': 'https://schema.org',
-      '@type': 'CollectionPage',
-      name: `${category.name} Blog`,
-      description: category.description,
-      url: `${siteUrl}/blog/${params.slug}`,
-    };
+    // Breadcrumb schema
+    const categoryName =
+      post.categories?.[0]?.masterCategory?.name || 'Blog';
+    const categorySlug =
+      post.categories?.[0]?.masterCategory?.slug || 'blog';
+    const breadcrumb = getBreadcrumbSchema([
+      { name: 'Home', url: SITE_URL },
+      { name: 'Blog', url: `${SITE_URL}/blog` },
+      { name: categoryName, url: `${SITE_URL}/blog/${categorySlug}` },
+      { name: post.title, url: `${SITE_URL}/blog/${params.slug}` },
+    ]);
+    jsonLdBlocks.push(breadcrumb);
+
+    return (
+      <>
+        {jsonLdBlocks.map((schema, i) => (
+          <script
+            key={i}
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+          />
+        ))}
+        <BlogPostContent
+          slug={params.slug}
+          post={post}
+          sanitizedContent={sanitizedContent}
+        />
+      </>
+    );
   }
 
-  return (
-    <>
-      {/* JSON-LD for AEO/GEO */}
-      {jsonLd && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-      )}
+  // Category page
+  if (type === 'category') {
+    const category = data as MasterCategory;
 
-      {/* Render Component based on type */}
-      {type === 'category' ? (
-        <MasterCategoryPage masterCategory={data as MasterCategory} />
-      ) : (
-        <SingleBlogPost slug={params.slug} post={data as Post} />
-      )}
-    </>
-  );
+    const categorySchema = getCollectionPageSchema(
+      `${category.name} Blog`,
+      category.description || `Articles about ${category.name}`,
+      `${SITE_URL}/blog/${params.slug}`
+    );
+    jsonLdBlocks.push(categorySchema);
+
+    const breadcrumb = getBreadcrumbSchema([
+      { name: 'Home', url: SITE_URL },
+      { name: 'Blog', url: `${SITE_URL}/blog` },
+      { name: category.name, url: `${SITE_URL}/blog/${params.slug}` },
+    ]);
+    jsonLdBlocks.push(breadcrumb);
+
+    return (
+      <>
+        {jsonLdBlocks.map((schema, i) => (
+          <script
+            key={i}
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+          />
+        ))}
+        <MasterCategoryPage masterCategory={category} />
+      </>
+    );
+  }
+
+  return null;
 }

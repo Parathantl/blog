@@ -1,12 +1,15 @@
-'use client';
-
-import { useEffect, useState } from 'react';
+import { Metadata } from 'next';
 import Link from 'next/link';
 import Hero from './components/portfolio/Hero';
 import ProjectsList from './components/portfolio/ProjectsList';
 import SkillsSection from './components/portfolio/SkillsSection';
 import BlogList from './components/blog/BlogList';
-import { portfolioAPI } from './lib/api';
+import { serverFetch } from './lib/server-api';
+import { SITE_URL } from './lib/structured-data';
+
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+};
 
 interface AboutData {
   fullName: string;
@@ -18,32 +21,16 @@ interface AboutData {
   twitterUrl?: string;
 }
 
-export default function Home() {
-  const [about, setAbout] = useState<AboutData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchAbout = async () => {
-      try {
-        const data = await portfolioAPI.getAbout();
-        setAbout(data);
-      } catch (error) {
-        console.error('Error fetching about data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAbout();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <p className="text-white">Loading...</p>
-      </div>
-    );
+async function getAbout(): Promise<AboutData | null> {
+  try {
+    return await serverFetch<AboutData>('/portfolio/about', { revalidate: 3600 });
+  } catch {
+    return null;
   }
+}
+
+export default async function Home() {
+  const about = await getAbout();
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
@@ -109,13 +96,13 @@ export default function Home() {
         <div className="container mx-auto px-6">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Recent Tech Posts
+              Recent Posts
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400">
-              Latest technical articles and insights
+              Latest articles and insights
             </p>
           </div>
-          <BlogList limit={3} masterCategorySlug="tech" />
+          <BlogList limit={3} />
         </div>
       </section>
 

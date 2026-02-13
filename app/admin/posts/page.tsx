@@ -160,7 +160,7 @@ export default function PostsManagement() {
       ) : (
         <div className="space-y-4">
           {filteredPosts
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .sort((a, b) => new Date(b.createdOn || b.createdAt).getTime() - new Date(a.createdOn || a.createdAt).getTime())
             .map((post) => (
               <div
                 key={post.id}
@@ -204,13 +204,13 @@ export default function PostsManagement() {
                           </p>
                         )}
                         <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                          <span>By {post.user?.username || 'Author'}</span>
+                          <span>By {post.user ? `${post.user.firstname} ${post.user.lastname}` : 'Author'}</span>
                           <span>•</span>
-                          <span>{formatDate(post.createdAt)}</span>
-                          {post.createdAt !== post.updatedAt && (
+                          <span>{formatDate(post.createdOn || post.createdAt)}</span>
+                          {(post.modifiedOn || post.updatedAt) !== (post.createdOn || post.createdAt) && (
                             <>
                               <span>•</span>
-                              <span>Updated {formatDate(post.updatedAt)}</span>
+                              <span>Updated {formatDate(post.modifiedOn || post.updatedAt)}</span>
                             </>
                           )}
                         </div>

@@ -14,12 +14,14 @@ const AddPost: React.FC = () => {
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [excerpt, setExcerpt] = useState('');
   const [categoryIds, setCategoryIds] = useState<number[]>([]);
   const [selectedMasterCategoryId, setSelectedMasterCategoryId] = useState<number>(0);
   const [mainImageUrl, setMainImageUrl] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
   const [masterCategories, setMasterCategories] = useState<MasterCategory[]>([]);
   const [loading, setLoading] = useState(false);
+  const [generatingExcerpt, setGeneratingExcerpt] = useState(false);
 
   useEffect(() => {
     fetchMasterCategories();
@@ -57,6 +59,31 @@ const AddPost: React.FC = () => {
     );
   };
 
+  const handleGenerateExcerpt = async () => {
+    if (!title.trim()) {
+      toast.error('Please enter a title first');
+      return;
+    }
+
+    const strippedContent = content.replace(/<[^>]*>/g, '').trim();
+    if (!strippedContent) {
+      toast.error('Please write some content first');
+      return;
+    }
+
+    setGeneratingExcerpt(true);
+    try {
+      const result = await blogAPI.generateExcerpt(title, content);
+      setExcerpt(result.excerpt);
+      toast.success('Excerpt generated!');
+    } catch (error: any) {
+      console.error('Error generating excerpt:', error);
+      toast.error(error?.message || 'Failed to generate excerpt');
+    } finally {
+      setGeneratingExcerpt(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -83,6 +110,7 @@ const AddPost: React.FC = () => {
         content,
         mainImageUrl: mainImageUrl || undefined,
         categoryIds,
+        excerpt: excerpt || undefined,
       });
 
       toast.success('Post created successfully!');
@@ -228,6 +256,55 @@ const AddPost: React.FC = () => {
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               Write your blog post content using the rich text editor
+            </p>
+          </div>
+
+          {/* Excerpt */}
+          <div>
+            <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Excerpt (SEO)
+            </label>
+            <div className="flex gap-2 mb-2">
+              <textarea
+                id="excerpt"
+                value={excerpt}
+                onChange={(e) => setExcerpt(e.target.value)}
+                rows={3}
+                maxLength={300}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white resize-none"
+                placeholder="A brief summary of your post for search engines and AI answer engines..."
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={handleGenerateExcerpt}
+                disabled={generatingExcerpt}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {generatingExcerpt ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+                    </svg>
+                    Generate with AI
+                  </>
+                )}
+              </button>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {excerpt.length}/300 characters
+              </span>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Used for meta descriptions, structured data, and AI answer engine citations. Leave empty for auto-generated.
             </p>
           </div>
 
