@@ -177,8 +177,8 @@ export default async function DynamicBlogPage({ params }: PageParams) {
     const hasHowTo = howToSteps.length >= 2;
 
     const articleSchema = hasHowTo
-      ? getTechArticleSchema(post, { wordCount, timeRequired, abstract })
-      : getBlogPostingSchema(post, { wordCount, timeRequired, abstract });
+      ? getTechArticleSchema(post, { wordCount, timeRequired, abstract, articleBody: textContent })
+      : getBlogPostingSchema(post, { wordCount, timeRequired, abstract, articleBody: textContent });
     jsonLdBlocks.push(articleSchema);
 
     // FAQ schema - emitted if 2+ Q&A pairs found in content (any language, any category)

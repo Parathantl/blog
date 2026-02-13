@@ -97,6 +97,7 @@ export function getBlogPostingSchema(
     wordCount?: number;
     timeRequired?: string;
     abstract?: string;
+    articleBody?: string;
   }
 ) {
   const textContent = post.content?.replace(/<[^>]*>/g, '') || '';
@@ -112,6 +113,7 @@ export function getBlogPostingSchema(
     headline: post.title,
     description: description,
     abstract: options?.abstract || description,
+    articleBody: options?.articleBody || textContent,
     image: post.mainImageUrl ? [post.mainImageUrl] : undefined,
     datePublished: post.createdAt,
     dateModified: post.updatedAt || post.createdAt,
@@ -145,6 +147,7 @@ export function getTechArticleSchema(
     wordCount?: number;
     timeRequired?: string;
     abstract?: string;
+    articleBody?: string;
   }
 ) {
   const base = getBlogPostingSchema(post, options);
