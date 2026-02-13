@@ -9,6 +9,9 @@ interface Project {
   description: string;
 }
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: 'Projects',
   description: 'A showcase of my development work and side projects. Full stack web applications, tools, and more.',

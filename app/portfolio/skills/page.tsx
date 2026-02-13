@@ -9,6 +9,9 @@ interface Skill {
   category: string;
 }
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: 'Skills & Technologies',
   description: 'Technologies and tools I use to bring ideas to life. Full stack development skills including JavaScript, TypeScript, React, Node.js, and more.',

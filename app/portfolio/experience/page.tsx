@@ -13,6 +13,9 @@ interface Experience {
   description?: string;
 }
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: 'Work Experience',
   description: 'My professional journey and career highlights as a Full Stack Developer.',

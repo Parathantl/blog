@@ -8,6 +8,9 @@ import { serverFetch } from './lib/server-api';
 import { SITE_URL } from './lib/structured-data';
 import { Post } from './types/blog';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   alternates: { canonical: '/' },
 };

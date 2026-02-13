@@ -4,6 +4,9 @@ import ProjectsList from '../components/portfolio/ProjectsList';
 import SkillsSection from '../components/portfolio/SkillsSection';
 import { getBreadcrumbSchema, getProfilePageSchema, SITE_URL } from '../lib/structured-data';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: 'Portfolio',
   description: 'Explore my projects, skills, and professional journey as a Full Stack Developer.',
