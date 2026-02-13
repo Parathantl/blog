@@ -8,18 +8,21 @@ import { Post, Category } from '@/app/types/blog';
 interface BlogListProps {
   masterCategorySlug?: string; // 'tech', 'tamil', or undefined for all
   limit?: number;
+  initialPosts?: Post[];
 }
 
-export default function BlogList({ masterCategorySlug, limit }: BlogListProps) {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function BlogList({ masterCategorySlug, limit, initialPosts }: BlogListProps) {
+  const [posts, setPosts] = useState<Post[]>(initialPosts || []);
+  const [filteredPosts, setFilteredPosts] = useState<Post[]>(initialPosts || []);
+  const [loading, setLoading] = useState(!initialPosts);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
+    if (initialPosts) return; // Skip fetch if server already provided data
+
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -54,7 +57,7 @@ export default function BlogList({ masterCategorySlug, limit }: BlogListProps) {
     };
 
     fetchData();
-  }, [masterCategorySlug, limit]);
+  }, [masterCategorySlug, limit, initialPosts]);
 
   // Handle search and category filter
   useEffect(() => {

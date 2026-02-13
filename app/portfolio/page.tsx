@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import ProjectsList from '../components/portfolio/ProjectsList';
 import SkillsSection from '../components/portfolio/SkillsSection';
-import { getBreadcrumbSchema, SITE_URL } from '../lib/structured-data';
+import { getBreadcrumbSchema, getProfilePageSchema, SITE_URL } from '../lib/structured-data';
 
 export const metadata: Metadata = {
   title: 'Portfolio',
@@ -22,11 +22,17 @@ export default function PortfolioPage() {
     { name: 'Portfolio', url: `${SITE_URL}/portfolio` },
   ]);
 
+  const profileSchema = getProfilePageSchema();
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(profileSchema) }}
       />
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
         {/* Header */}

@@ -12,6 +12,7 @@ import {
   getHowToSchema,
   getBreadcrumbSchema,
   getCollectionPageSchema,
+  getPersonSchema,
   SITE_URL,
 } from '@/app/lib/structured-data';
 import {
@@ -25,6 +26,24 @@ interface PageParams {
   params: {
     slug: string;
   };
+}
+
+interface AboutData {
+  fullName?: string;
+  tagline?: string;
+  bio?: string;
+  profileImageUrl?: string;
+  linkedinUrl?: string;
+  githubUrl?: string;
+  twitterUrl?: string;
+}
+
+async function getAboutData(): Promise<AboutData | null> {
+  try {
+    return await serverFetch<AboutData>('/portfolio/about', { revalidate: 86400 });
+  } catch {
+    return null;
+  }
 }
 
 async function getPageData(slug: string): Promise<{
@@ -157,6 +176,7 @@ export default async function DynamicBlogPage({ params }: PageParams) {
 
   if (type === 'post') {
     const post = data as Post;
+    const about = await getAboutData();
 
     // Server-side content sanitization - content will be in initial HTML
     const sanitizedContent = DOMPurify.sanitize(post.content || '');
@@ -218,6 +238,23 @@ export default async function DynamicBlogPage({ params }: PageParams) {
     ]);
     jsonLdBlocks.push(breadcrumb);
 
+    // Enhanced Person schema with social links for E-E-A-T authority
+    if (about) {
+      const personSchema = getPersonSchema(about);
+      jsonLdBlocks.push(personSchema);
+    }
+
+    const authorInfo = about
+      ? {
+          name: about.fullName || 'Parathan Thiyagalingam',
+          bio: about.bio,
+          profileImageUrl: about.profileImageUrl,
+          linkedinUrl: about.linkedinUrl,
+          githubUrl: about.githubUrl,
+          twitterUrl: about.twitterUrl,
+        }
+      : undefined;
+
     return (
       <>
         {jsonLdBlocks.map((schema, i) => (
@@ -231,6 +268,7 @@ export default async function DynamicBlogPage({ params }: PageParams) {
           slug={params.slug}
           post={post}
           sanitizedContent={sanitizedContent}
+          authorInfo={authorInfo}
         />
       </>
     );

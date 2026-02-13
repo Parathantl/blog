@@ -19,14 +19,17 @@ interface Project {
 interface ProjectsListProps {
   featured?: boolean;
   limit?: number;
+  initialData?: Project[];
 }
 
-export default function ProjectsList({ featured = false, limit }: ProjectsListProps) {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function ProjectsList({ featured = false, limit, initialData }: ProjectsListProps) {
+  const [projects, setProjects] = useState<Project[]>(initialData || []);
+  const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (initialData) return; // Skip fetch if server already provided data
+
     const fetchProjects = async () => {
       try {
         setLoading(true);
@@ -45,7 +48,7 @@ export default function ProjectsList({ featured = false, limit }: ProjectsListPr
     };
 
     fetchProjects();
-  }, [featured, limit]);
+  }, [featured, limit, initialData]);
 
   if (loading) {
     return (

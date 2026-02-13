@@ -1,6 +1,13 @@
 import { Metadata } from 'next';
 import ProjectsList from '../../components/portfolio/ProjectsList';
-import { getBreadcrumbSchema, SITE_URL } from '../../lib/structured-data';
+import { serverFetch } from '@/app/lib/server-api';
+import { getBreadcrumbSchema, getItemListSchema, SITE_URL } from '../../lib/structured-data';
+
+interface Project {
+  id: number;
+  title: string;
+  description: string;
+}
 
 export const metadata: Metadata = {
   title: 'Projects',
@@ -14,12 +21,33 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ProjectsPage() {
+async function getProjects(): Promise<Project[]> {
+  try {
+    return await serverFetch<Project[]>('/portfolio/projects', { revalidate: 3600 });
+  } catch {
+    return [];
+  }
+}
+
+export default async function ProjectsPage() {
+  const projects = await getProjects();
+
   const breadcrumb = getBreadcrumbSchema([
     { name: 'Home', url: SITE_URL },
     { name: 'Portfolio', url: `${SITE_URL}/portfolio` },
     { name: 'Projects', url: `${SITE_URL}/portfolio/projects` },
   ]);
+
+  const projectListSchema = projects.length > 0
+    ? getItemListSchema(
+        'Projects by Parathan Thiyagalingam',
+        projects.map((p, i) => ({
+          name: p.title,
+          url: `${SITE_URL}/portfolio/projects/${p.id}`,
+          position: i + 1,
+        }))
+      )
+    : null;
 
   return (
     <>
@@ -27,6 +55,12 @@ export default function ProjectsPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
+      {projectListSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(projectListSchema) }}
+        />
+      )}
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-12">
         <div className="container mx-auto px-6">
           <div className="text-center mb-12">

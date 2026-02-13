@@ -1,6 +1,13 @@
 import { Metadata } from 'next';
 import SkillsSection from '../../components/portfolio/SkillsSection';
-import { getBreadcrumbSchema, SITE_URL } from '../../lib/structured-data';
+import { serverFetch } from '@/app/lib/server-api';
+import { getBreadcrumbSchema, getItemListSchema, SITE_URL } from '../../lib/structured-data';
+
+interface Skill {
+  id: number;
+  name: string;
+  category: string;
+}
 
 export const metadata: Metadata = {
   title: 'Skills & Technologies',
@@ -14,12 +21,41 @@ export const metadata: Metadata = {
   },
 };
 
-export default function SkillsPage() {
+async function getSkills(): Promise<Skill[]> {
+  try {
+    return await serverFetch<Skill[]>('/portfolio/skills', { revalidate: 3600 });
+  } catch {
+    return [];
+  }
+}
+
+export default async function SkillsPage() {
+  const skills = await getSkills();
+
   const breadcrumb = getBreadcrumbSchema([
     { name: 'Home', url: SITE_URL },
     { name: 'Portfolio', url: `${SITE_URL}/portfolio` },
     { name: 'Skills', url: `${SITE_URL}/portfolio/skills` },
   ]);
+
+  const skillListSchema = skills.length > 0
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        name: 'Technical Skills',
+        description: 'Technologies and tools used by Parathan Thiyagalingam',
+        numberOfItems: skills.length,
+        itemListElement: skills.map((skill, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          item: {
+            '@type': 'DefinedTerm',
+            name: skill.name,
+            inDefinedTermSet: skill.category,
+          },
+        })),
+      }
+    : null;
 
   return (
     <>
@@ -27,6 +63,12 @@ export default function SkillsPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
+      {skillListSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(skillListSchema) }}
+        />
+      )}
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-12">
         <div className="container mx-auto px-6">
           <div className="text-center mb-12">

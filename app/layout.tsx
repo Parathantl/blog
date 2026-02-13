@@ -62,6 +62,7 @@ const RootLayout: React.FC<RootLayoutProps> = ({ children }) => {
       <head>
         <link rel="alternate" type="application/rss+xml" title="Parathan Thiyagalingam - Blog RSS Feed" href="/feed.xml" />
         <link rel="manifest" href="/site.webmanifest" />
+        <link rel="author" href="/llms.txt" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}

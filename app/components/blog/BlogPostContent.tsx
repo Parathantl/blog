@@ -5,15 +5,26 @@ import RelatedPosts from '@/app/components/blog/RelatedPosts';
 import ReadingProgress from '@/app/components/blog/ReadingProgress';
 import NewsletterSignup from '@/app/components/blog/NewsletterSignup';
 import BlogPostInteractions from '@/app/components/blog/BlogPostInteractions';
+import AuthorBio from '@/app/components/blog/AuthorBio';
 import { SITE_URL } from '@/app/lib/structured-data';
+
+interface AuthorInfo {
+  name: string;
+  bio?: string;
+  profileImageUrl?: string;
+  linkedinUrl?: string;
+  githubUrl?: string;
+  twitterUrl?: string;
+}
 
 interface BlogPostContentProps {
   slug: string;
   post: Post;
   sanitizedContent: string;
+  authorInfo?: AuthorInfo;
 }
 
-export default function BlogPostContent({ slug, post, sanitizedContent }: BlogPostContentProps) {
+export default function BlogPostContent({ slug, post, sanitizedContent, authorInfo }: BlogPostContentProps) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -40,12 +51,14 @@ export default function BlogPostContent({ slug, post, sanitizedContent }: BlogPo
       <article className="w-full">
         {/* Header Section */}
         <div className="max-w-6xl mx-auto px-4 md:px-8 lg:px-12">
-          <Link
-            href="/blog"
-            className="inline-block text-blue-600 dark:text-blue-400 hover:underline mb-4 md:mb-6 text-sm md:text-base"
-          >
-            ← Back to Blog
-          </Link>
+          <nav aria-label="Breadcrumb">
+            <Link
+              href="/blog"
+              className="inline-block text-blue-600 dark:text-blue-400 hover:underline mb-4 md:mb-6 text-sm md:text-base"
+            >
+              ← Back to Blog
+            </Link>
+          </nav>
 
           <header className="mb-6 md:mb-8">
             {post.categories && post.categories.length > 0 && (
@@ -106,17 +119,17 @@ export default function BlogPostContent({ slug, post, sanitizedContent }: BlogPo
 
         {/* Featured Image */}
         {post.mainImageUrl && (
-          <div className="w-full mb-8 md:mb-12">
+          <figure className="w-full mb-8 md:mb-12">
             <img
               src={post.mainImageUrl}
               alt={post.title}
               className="w-full h-64 md:h-[500px] lg:h-[600px] xl:h-[700px] object-cover"
             />
-          </div>
+          </figure>
         )}
 
         {/* Content Section */}
-        <div className="max-w-6xl mx-auto px-4 md:px-8 lg:px-12">
+        <section className="max-w-6xl mx-auto px-4 md:px-8 lg:px-12">
 
           <SocialShare
             url={postUrl}
@@ -144,23 +157,36 @@ export default function BlogPostContent({ slug, post, sanitizedContent }: BlogPo
             />
           </div>
 
-          <NewsletterSignup
-            currentMasterCategorySlug={
-              post.categories?.[0]?.masterCategory?.slug
-            }
-          />
+          {authorInfo && (
+            <AuthorBio
+              name={authorInfo.name}
+              bio={authorInfo.bio}
+              profileImageUrl={authorInfo.profileImageUrl}
+              linkedinUrl={authorInfo.linkedinUrl}
+              githubUrl={authorInfo.githubUrl}
+              twitterUrl={authorInfo.twitterUrl}
+            />
+          )}
 
-          <RelatedPosts currentSlug={slug} />
+          <aside aria-label="Newsletter and related content">
+            <NewsletterSignup
+              currentMasterCategorySlug={
+                post.categories?.[0]?.masterCategory?.slug
+              }
+            />
 
-          <div className="mt-8 md:mt-12 text-center">
+            <RelatedPosts currentSlug={slug} />
+          </aside>
+
+          <nav className="mt-8 md:mt-12 text-center" aria-label="Blog navigation">
             <Link
               href="/blog"
               className="inline-block px-6 py-2.5 md:px-8 md:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors text-sm md:text-base"
             >
               View More Posts
             </Link>
-          </div>
-        </div>
+          </nav>
+        </section>
       </article>
 
       {/* Client-side interactions (lightbox, copy buttons) */}

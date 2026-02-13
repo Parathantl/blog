@@ -1,6 +1,17 @@
 import { Metadata } from 'next';
 import ExperienceTimeline from '../../components/portfolio/ExperienceTimeline';
-import { getBreadcrumbSchema, SITE_URL } from '../../lib/structured-data';
+import { serverFetch } from '@/app/lib/server-api';
+import { getBreadcrumbSchema, SITE_URL, PERSON_ID } from '../../lib/structured-data';
+
+interface Experience {
+  id: number;
+  title: string;
+  company: string;
+  location?: string;
+  startDate: string;
+  endDate?: string;
+  description?: string;
+}
 
 export const metadata: Metadata = {
   title: 'Work Experience',
@@ -14,12 +25,49 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ExperiencePage() {
+async function getExperience(): Promise<Experience[]> {
+  try {
+    return await serverFetch<Experience[]>('/portfolio/experience', { revalidate: 3600 });
+  } catch {
+    return [];
+  }
+}
+
+export default async function ExperiencePage() {
+  const experiences = await getExperience();
+
   const breadcrumb = getBreadcrumbSchema([
     { name: 'Home', url: SITE_URL },
     { name: 'Portfolio', url: `${SITE_URL}/portfolio` },
     { name: 'Experience', url: `${SITE_URL}/portfolio/experience` },
   ]);
+
+  const experienceListSchema = experiences.length > 0
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        name: 'Professional Experience',
+        description: 'Work experience and career history of Parathan Thiyagalingam',
+        numberOfItems: experiences.length,
+        itemListElement: experiences.map((exp, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          item: {
+            '@type': 'OrganizationRole',
+            roleName: exp.title,
+            startDate: exp.startDate,
+            endDate: exp.endDate || undefined,
+            memberOf: {
+              '@type': 'Organization',
+              name: exp.company,
+              location: exp.location
+                ? { '@type': 'Place', name: exp.location }
+                : undefined,
+            },
+          },
+        })),
+      }
+    : null;
 
   return (
     <>
@@ -27,6 +75,12 @@ export default function ExperiencePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
+      {experienceListSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(experienceListSchema) }}
+        />
+      )}
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-12">
         <div className="container mx-auto px-6">
           <div className="text-center mb-12">

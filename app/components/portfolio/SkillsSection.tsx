@@ -14,12 +14,18 @@ interface Skill {
   isVisible: boolean;
 }
 
-export default function SkillsSection() {
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [loading, setLoading] = useState(true);
+interface SkillsSectionProps {
+  initialData?: Skill[];
+}
+
+export default function SkillsSection({ initialData }: SkillsSectionProps = {}) {
+  const [skills, setSkills] = useState<Skill[]>(initialData || []);
+  const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (initialData) return; // Skip fetch if server already provided data
+
     const fetchSkills = async () => {
       try {
         setLoading(true);
@@ -34,7 +40,7 @@ export default function SkillsSection() {
     };
 
     fetchSkills();
-  }, []);
+  }, [initialData]);
 
   if (loading) {
     return (

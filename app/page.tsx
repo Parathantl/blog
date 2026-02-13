@@ -6,6 +6,7 @@ import SkillsSection from './components/portfolio/SkillsSection';
 import BlogList from './components/blog/BlogList';
 import { serverFetch } from './lib/server-api';
 import { SITE_URL } from './lib/structured-data';
+import { Post } from './types/blog';
 
 export const metadata: Metadata = {
   alternates: { canonical: '/' },
@@ -21,6 +22,28 @@ interface AboutData {
   twitterUrl?: string;
 }
 
+interface Project {
+  id: number;
+  title: string;
+  description: string;
+  longDescription: string;
+  technologies: string[];
+  imageUrl?: string;
+  projectUrl?: string;
+  githubUrl?: string;
+  featured: boolean;
+}
+
+interface Skill {
+  id: number;
+  name: string;
+  category: string;
+  proficiencyLevel: number;
+  iconUrl?: string;
+  displayOrder: number;
+  isVisible: boolean;
+}
+
 async function getAbout(): Promise<AboutData | null> {
   try {
     return await serverFetch<AboutData>('/portfolio/about', { revalidate: 3600 });
@@ -29,8 +52,39 @@ async function getAbout(): Promise<AboutData | null> {
   }
 }
 
+async function getFeaturedProjects(): Promise<Project[]> {
+  try {
+    const projects = await serverFetch<Project[]>('/portfolio/projects/featured', { revalidate: 3600 });
+    return projects.slice(0, 3);
+  } catch {
+    return [];
+  }
+}
+
+async function getSkills(): Promise<Skill[]> {
+  try {
+    return await serverFetch<Skill[]>('/portfolio/skills', { revalidate: 3600 });
+  } catch {
+    return [];
+  }
+}
+
+async function getRecentPosts(): Promise<Post[]> {
+  try {
+    const posts = await serverFetch<Post[]>('/post', { revalidate: 3600 });
+    return Array.isArray(posts) ? posts.slice(0, 3) : [];
+  } catch {
+    return [];
+  }
+}
+
 export default async function Home() {
-  const about = await getAbout();
+  const [about, projects, skills, posts] = await Promise.all([
+    getAbout(),
+    getFeaturedProjects(),
+    getSkills(),
+    getRecentPosts(),
+  ]);
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
@@ -46,7 +100,7 @@ export default async function Home() {
       />
 
       {/* Featured Projects Section */}
-      <section className="py-16 bg-white dark:bg-gray-800">
+      <section aria-label="Featured Projects" className="py-16 bg-white dark:bg-gray-800">
         <div className="container mx-auto px-6">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
@@ -56,7 +110,7 @@ export default async function Home() {
               Check out some of my recent work
             </p>
           </div>
-          <ProjectsList featured={true} limit={3} />
+          <ProjectsList featured={true} limit={3} initialData={projects} />
           <div className="text-center mt-8">
             <Link
               href="/portfolio/projects"
@@ -69,7 +123,7 @@ export default async function Home() {
       </section>
 
       {/* Skills Section */}
-      <section className="py-16 bg-gray-100 dark:bg-gray-900">
+      <section aria-label="Skills and Technologies" className="py-16 bg-gray-100 dark:bg-gray-900">
         <div className="container mx-auto px-6">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
@@ -79,7 +133,7 @@ export default async function Home() {
               Technologies I work with
             </p>
           </div>
-          <SkillsSection />
+          <SkillsSection initialData={skills} />
           <div className="text-center mt-8">
             <Link
               href="/portfolio/skills"
@@ -92,7 +146,7 @@ export default async function Home() {
       </section>
 
       {/* Recent Blog Posts Section */}
-      <section className="py-16 bg-white dark:bg-gray-800">
+      <section aria-label="Recent Blog Posts" className="py-16 bg-white dark:bg-gray-800">
         <div className="container mx-auto px-6">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
@@ -102,12 +156,12 @@ export default async function Home() {
               Latest articles and insights
             </p>
           </div>
-          <BlogList limit={3} />
+          <BlogList limit={3} initialPosts={posts} />
         </div>
       </section>
 
       {/* Contact CTA Section */}
-      <section className="py-16 bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+      <section aria-label="Contact" className="py-16 bg-gradient-to-r from-blue-600 to-blue-800 text-white">
         <div className="container mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             Let&apos;s Work Together

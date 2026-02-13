@@ -272,4 +272,25 @@ export function getCollectionPageSchema(
   };
 }
 
+export function getProfilePageSchema(about?: {
+  fullName?: string;
+  tagline?: string;
+  bio?: string;
+  profileImageUrl?: string;
+  linkedinUrl?: string;
+  githubUrl?: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    name: `${about?.fullName || 'Parathan Thiyagalingam'} - Portfolio`,
+    description: about?.bio || 'Full Stack Developer portfolio and professional information.',
+    url: `${SITE_URL}/portfolio`,
+    mainEntity: {
+      '@type': 'Person',
+      '@id': PERSON_ID,
+    },
+  };
+}
+
 export { SITE_URL, PERSON_ID };
