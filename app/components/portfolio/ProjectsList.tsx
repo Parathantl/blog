@@ -23,12 +23,13 @@ interface ProjectsListProps {
 }
 
 export default function ProjectsList({ featured = false, limit, initialData }: ProjectsListProps) {
-  const [projects, setProjects] = useState<Project[]>(initialData || []);
-  const [loading, setLoading] = useState(!initialData);
+  const hasInitialData = initialData && initialData.length > 0;
+  const [projects, setProjects] = useState<Project[]>(hasInitialData ? initialData : []);
+  const [loading, setLoading] = useState(!hasInitialData);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (initialData) return; // Skip fetch if server already provided data
+    if (initialData && initialData.length > 0) return; // Skip fetch only if server provided actual data
 
     const fetchProjects = async () => {
       try {

@@ -12,16 +12,17 @@ interface BlogListProps {
 }
 
 export default function BlogList({ masterCategorySlug, limit, initialPosts }: BlogListProps) {
-  const [posts, setPosts] = useState<Post[]>(initialPosts || []);
-  const [filteredPosts, setFilteredPosts] = useState<Post[]>(initialPosts || []);
-  const [loading, setLoading] = useState(!initialPosts);
+  const hasInitialPosts = initialPosts && initialPosts.length > 0;
+  const [posts, setPosts] = useState<Post[]>(hasInitialPosts ? initialPosts : []);
+  const [filteredPosts, setFilteredPosts] = useState<Post[]>(hasInitialPosts ? initialPosts : []);
+  const [loading, setLoading] = useState(!hasInitialPosts);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
-    if (initialPosts) return; // Skip fetch if server already provided data
+    if (initialPosts && initialPosts.length > 0) return; // Skip fetch only if server provided actual data
 
     const fetchData = async () => {
       try {

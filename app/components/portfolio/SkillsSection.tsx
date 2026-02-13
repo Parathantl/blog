@@ -19,12 +19,13 @@ interface SkillsSectionProps {
 }
 
 export default function SkillsSection({ initialData }: SkillsSectionProps = {}) {
-  const [skills, setSkills] = useState<Skill[]>(initialData || []);
-  const [loading, setLoading] = useState(!initialData);
+  const hasInitialData = initialData && initialData.length > 0;
+  const [skills, setSkills] = useState<Skill[]>(hasInitialData ? initialData : []);
+  const [loading, setLoading] = useState(!hasInitialData);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (initialData) return; // Skip fetch if server already provided data
+    if (initialData && initialData.length > 0) return; // Skip fetch only if server provided actual data
 
     const fetchSkills = async () => {
       try {
