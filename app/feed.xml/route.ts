@@ -1,5 +1,8 @@
 import { Post } from '@/app/types/blog';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
+
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://parathan.com';
 
 const getApiUrl = () => {
